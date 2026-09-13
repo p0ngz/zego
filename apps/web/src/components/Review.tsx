@@ -56,6 +56,7 @@ export function Review({ form }: ReviewProps): JSX.Element {
         }
         entries.forEach((row, rowIndex) => {
           const parts = block.fields
+            .filter((field) => field.type !== 'heading')
             .map((field) => display(field, row[field.k], lang, form))
             .filter((part) => part !== '—');
           rows.push({
@@ -68,6 +69,7 @@ export function Review({ form }: ReviewProps): JSX.Element {
 
       for (const field of block.fields) {
         if (field.when && !field.when()) continue;
+        if (field.type === 'heading') continue;
         rows.push({
           label: form.t(field.th, field.en),
           value: display(field, form.values[field.k], lang, form),

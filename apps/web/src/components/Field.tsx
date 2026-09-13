@@ -22,6 +22,18 @@ export function Field({ field, value, onChange, error, lang }: FieldProps): JSX.
   const style = field.span ? { gridColumn: field.span } : undefined;
   const errorId = error ? `${id}-error` : undefined;
 
+  // A label for the group under it, with nothing to fill in.
+  if (field.type === 'heading') {
+    return (
+      <div className="field field--heading" style={style}>
+        <h4 className="field-heading">
+          {label}
+          {sub ? <> <span className="field-sub">{sub}</span></> : null}
+        </h4>
+      </div>
+    );
+  }
+
   // The check draws its own label inside the control.
   if (field.type === 'check') {
     return (

@@ -346,11 +346,30 @@ textarea:focus-visible {
   }
 
   /* A checkbox draws its own label, so it has nothing to align to. */
-  .field--check {
+  .field--check,
+  /* A heading has no control under it to line up with. */
+  .field--heading {
     display: flex;
     flex-direction: column;
     gap: 6px;
   }
+}
+
+/*
+ * A label for the group of fields beneath it.
+ *
+ * Inside a card that already has a title, this is the second level down:
+ * the same hairline the step's own sections use, at a smaller size, so a
+ * reference's address reads as one thing rather than seven loose boxes.
+ */
+.field-heading {
+  margin: 6px 0 0;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.4;
 }
 
 .field-label {

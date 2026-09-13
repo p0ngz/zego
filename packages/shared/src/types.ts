@@ -4,7 +4,16 @@ export type Lang = 'th' | 'en';
 /** A pickable option: the value we store, then its Thai and English labels. */
 export type Option = readonly [value: string, th: string, en: string];
 
-export type FieldType = 'text' | 'date' | 'select' | 'chips' | 'check' | 'area' | 'combo';
+export type FieldType =
+  | 'text'
+  | 'date'
+  | 'select'
+  | 'chips'
+  | 'check'
+  | 'area'
+  | 'combo'
+  /** A label for the fields under it — no control, no answer of its own. */
+  | 'heading';
 
 export interface FieldSpec {
   /** Key this answer is stored under. */

@@ -229,10 +229,24 @@ function rowAddressFields(ctx: CatalogContext): FieldSpec[] {
 
   return [
     {
+      /*
+       * "Optional" belongs on the group, not on the post code.
+       *
+       * Sitting on the post code it reads as though that one box is the
+       * optional part, which is not what is being said — the whole
+       * address is.
+       */
+      k: 'addressHeading',
+      th: 'ที่อยู่',
+      en: 'Address',
+      type: 'heading',
+      opt: true,
+      span: '1/-1',
+    },
+    {
       k: 'postcode',
       th: 'รหัสไปรษณีย์',
       en: 'Post code',
-      opt: true,
       numeric: true,
       maxLength: 5,
       ph: '10520',
