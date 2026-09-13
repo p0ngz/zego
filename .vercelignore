@@ -1,0 +1,22 @@
+# What the Vercel CLI must not upload.
+#
+# .gitignore governs git; the CLI needs its own list, and without it the
+# local .env — a database password and an encryption key for a machine
+# that is not this one — is packed into the build.
+
+.env
+.env.*
+!.env.example
+
+node_modules
+dist
+.vercel
+
+# Reference images and IDE scratch, none of which the build reads.
+uploads
+.thumbnail
+.playwright-mcp
+
+# The design the form was built from, kept in git for reference only.
+*.dc.html
+support.js

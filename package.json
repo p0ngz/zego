@@ -16,7 +16,7 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspace=@zego/api",
     "seed": "npm run seed --workspace=@zego/api",
-    "vercel-build": "prisma generate --schema apps/api/prisma/schema.prisma && npm run build --workspace=@zego/web"
+    "vercel-build": "prisma generate --schema apps/api/prisma/schema.prisma && esbuild apps/api/src/app.ts --bundle --platform=node --format=esm --target=node20 --outfile=api/_server.js --external:@prisma/client --external:express --external:cors --external:helmet --external:express-rate-limit --external:zod && npm run build --workspace=@zego/web"
   },
   "engines": {
     "node": ">=20.11"

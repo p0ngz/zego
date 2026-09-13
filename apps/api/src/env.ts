@@ -43,7 +43,15 @@ if (!parsed.success) {
 
 export const env = parsed.data;
 
-export const isProduction = env.NODE_ENV === 'production';
+/**
+ * Running for real, by either name.
+ *
+ * NODE_ENV deliberately is not set on Vercel: npm reads it during the
+ * build and skips every devDependency, which takes TypeScript, Vite and
+ * the Prisma CLI with it. Vercel says which environment this is in its
+ * own variable instead, so that is what gets asked.
+ */
+export const isProduction = env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production';
 export const isTest = env.NODE_ENV === 'test';
 
 if (isProduction && !env.APP_ENCRYPTION_KEY) {

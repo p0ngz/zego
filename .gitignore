@@ -19,3 +19,9 @@ Thumbs.db
 # Images pasted into the IDE chat, not project files
 uploads/
 .thumbnail
+
+.vercel
+.env*
+
+# Built by `vercel-build` from apps/api.
+api/_server.js
