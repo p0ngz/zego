@@ -1,0 +1,992 @@
+/*
+ * Zego job application.
+ *
+ * Colours, sizes and radii here are the ones from the design file; the
+ * inline styles it used are collected into classes so the markup stays
+ * readable. Nothing here is a token system — the design is one screen
+ * with one palette, and naming every shade would only add a layer to
+ * read through.
+ */
+
+:root {
+  --ink: #1a1d26;
+  --ink-soft: #3a3f4b;
+  --muted: #6b7180;
+  --muted-soft: #8a90a0;
+  --faint: #9aa0ae;
+  --faintest: #a7adba;
+  --page: #f5f6f9;
+  --line: #e6e8ee;
+  --line-card: #e3e6ee;
+  --line-field: #d7dbe3;
+  --blue: #3b5bdb;
+  --blue-deep: #3350c4;
+  --blue-pale: #8fa3ea;
+  --blue-wash: #f0f3fd;
+  --danger: #c2410c;
+  --danger-line: #e08a62;
+  --focus-ring: 0 0 0 3px rgba(59, 91, 219, 0.15);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--page);
+  font-family: Manrope, 'Noto Sans Thai', system-ui, sans-serif;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--blue);
+}
+a:hover {
+  color: #2f49b8;
+}
+
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--faint);
+}
+
+/* Every control is reachable by keyboard, and shows where it is. */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* ---------------------------------------------------------------- *
+ * Shell
+ * ---------------------------------------------------------------- */
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.header-inner,
+.main,
+.footbar-inner {
+  max-width: 780px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.header-inner {
+  padding: 12px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.brand-mark {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--blue);
+  flex: none;
+}
+
+.brand-text {
+  font-weight: 700;
+  font-size: 14.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: none;
+}
+
+.save {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: #5e8a6e;
+  font-weight: 700;
+}
+
+.save-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #3f9d63;
+  flex: none;
+}
+
+.lang {
+  display: flex;
+  background: #eef0f5;
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.lang-btn {
+  height: 28px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+  background: transparent;
+  color: var(--muted);
+}
+
+.lang-btn[aria-pressed='true'] {
+  background: #fff;
+  color: var(--blue);
+}
+
+.main {
+  flex: 1;
+  /* Bottom padding clears the fixed action bar. */
+  padding: 26px 22px 132px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+/* ---------------------------------------------------------------- *
+ * Step navigation
+ * ---------------------------------------------------------------- */
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.step-counter {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--blue);
+  letter-spacing: 0.03em;
+}
+
+.step-bars {
+  display: flex;
+  gap: 6px;
+}
+
+.step-btn {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.step-bar {
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+  background: #e0e3ec;
+}
+.step-bar.is-done {
+  background: var(--blue-pale);
+}
+.step-bar.is-current {
+  background: var(--blue);
+}
+
+.step-name {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--faintest);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  width: 100%;
+}
+.step-name.is-done {
+  color: var(--muted);
+}
+.step-name.is-current {
+  color: var(--blue);
+}
+
+.step-head {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.step-title {
+  margin: 0;
+  font-size: 27px;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+}
+
+.step-lede {
+  margin: 0;
+  font-size: 14.5px;
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 58ch;
+}
+
+/* ---------------------------------------------------------------- *
+ * Question blocks
+ * ---------------------------------------------------------------- */
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.block-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--line);
+}
+
+.block-title {
+  margin: 0;
+  font-size: 15.5px;
+  font-weight: 800;
+}
+
+/*
+ * Fields line up across a row, whatever their labels do.
+ *
+ * Each field occupies three rows of the grid — label, control, error —
+ * and borrows them from the parent with `subgrid`. A label that runs to
+ * two lines makes the label row taller for everything beside it, so the
+ * inputs still start at the same height instead of stepping down one by
+ * one. Laying each field out on its own could not do that: a field knows
+ * nothing about its neighbours.
+ */
+.field-grid,
+.repeat-grid {
+  display: grid;
+  column-gap: 20px;
+  row-gap: 16px;
+}
+
+.field-grid {
+  grid-template-columns: repeat(auto-fit, minmax(232px, 1fr));
+}
+
+/*
+ * The fallback, and what older Samsung Internet and Chrome get: a plain
+ * column. Labels of different lengths still step the inputs apart, but
+ * the form works and the note below keeps the worst of the wrapping out
+ * of the label.
+ */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+@supports (grid-template-rows: subgrid) {
+  .field {
+    display: grid;
+    grid-template-rows: subgrid;
+    grid-row: span 3;
+    /* Overrides the parent's 16px for the rows inside one field. */
+    row-gap: 6px;
+  }
+
+  /* A checkbox draws its own label, so it has nothing to align to. */
+  .field--check {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+}
+
+.field-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  line-height: 1.4;
+  /* Keeps the label's own text and the note beneath it in one cell. */
+  align-self: end;
+}
+
+/*
+ * The note sits after the label while there is room for all of it, and
+ * drops to the next line whole when there is not.
+ *
+ * inline-block is what buys that: the line breaker treats it as one
+ * piece, so a long note moves down rather than splitting after its
+ * second-to-last word. `max-width` lets a note longer than the column
+ * still wrap inside itself instead of running past the edge.
+ */
+.field-sub {
+  display: inline-block;
+  max-width: 100%;
+  color: var(--faint);
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.field-error {
+  font-size: 12.5px;
+  color: var(--danger);
+  font-weight: 700;
+}
+
+/* ---------------------------------------------------------------- *
+ * Controls
+ * ---------------------------------------------------------------- */
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  border: 1px solid var(--line-field);
+  border-radius: 10px;
+  font-size: 15px;
+  color: var(--ink);
+  background: #fff;
+  outline: none;
+}
+
+.input,
+.select {
+  height: 44px;
+}
+
+.input {
+  padding: 0 14px;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: var(--blue);
+  box-shadow: var(--focus-ring);
+}
+
+.input.is-invalid,
+.select.is-invalid,
+.textarea.is-invalid {
+  border-color: var(--danger-line);
+}
+
+.input:read-only {
+  background: #f3f5fa;
+}
+
+.select {
+  padding: 0 38px 0 13px;
+  font-weight: 600;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1.5 6 6.5l5-5' fill='none' stroke='%236b7180' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  appearance: none;
+  cursor: pointer;
+}
+
+.select.is-empty {
+  color: var(--faint);
+}
+
+.textarea {
+  padding: 11px 14px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  cursor: pointer;
+  border: 1px solid var(--line-field);
+  background: #fff;
+  color: var(--ink-soft);
+}
+
+.chip[aria-pressed='true'] {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #fff;
+}
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 2px 0;
+  cursor: pointer;
+}
+
+.check-box {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 1px solid #c3c8d4;
+  background: #fff;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.check[aria-pressed='true'] .check-box {
+  border-color: var(--blue);
+  background: var(--blue);
+}
+
+.check-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.check-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.45;
+}
+
+.check-sub {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted-soft);
+  line-height: 1.5;
+}
+
+/* A list you can also type into. */
+.combo {
+  position: relative;
+}
+
+/* The same chevron a select gets, because it opens the same kind of list. */
+.input--combo {
+  padding-right: 38px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1.5 6 6.5l5-5' fill='none' stroke='%236b7180' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+}
+
+.combo-menu {
+  position: absolute;
+  top: 46px;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: #fff;
+  border: 1px solid #dfe3ec;
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgba(26, 29, 38, 0.14);
+  padding: 6px;
+  max-height: 264px;
+  overflow: auto;
+  margin: 0;
+  list-style: none;
+}
+
+.combo-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.combo-item:hover,
+.combo-item.is-active {
+  background: var(--blue-wash);
+  color: var(--blue);
+}
+
+.combo-note {
+  padding: 8px 12px 4px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--faintest);
+}
+
+/* ---------------------------------------------------------------- *
+ * Sections a person adds rows to
+ * ---------------------------------------------------------------- */
+
+.repeat {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.repeat-card {
+  background: #fff;
+  border: 1px solid var(--line-card);
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.repeat-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.repeat-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--blue);
+  letter-spacing: 0.02em;
+}
+
+.repeat-remove {
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 8px;
+  border: 1px solid var(--line-card);
+  background: #fff;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #8a5040;
+  cursor: pointer;
+}
+
+.repeat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px 18px;
+}
+
+.repeat-grid .field-label {
+  font-size: 12.5px;
+}
+.repeat-grid .field-sub {
+  font-size: 11.5px;
+}
+.repeat-grid .field-error {
+  font-size: 12px;
+}
+.repeat-grid .input,
+.repeat-grid .select {
+  height: 42px;
+  font-size: 14.5px;
+}
+.repeat-grid .input {
+  padding: 0 13px;
+}
+.repeat-grid .textarea {
+  font-size: 14.5px;
+  padding: 10px 13px;
+}
+.repeat-grid .combo-menu {
+  top: 44px;
+}
+.repeat-grid .chips {
+  gap: 7px;
+}
+.repeat-grid .chip {
+  min-height: 36px;
+  padding: 7px 14px;
+  font-size: 13px;
+}
+
+.repeat-empty {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--muted-soft);
+  line-height: 1.6;
+}
+
+.repeat-add {
+  align-self: flex-start;
+  min-height: 42px;
+  padding: 9px 16px;
+  border-radius: 10px;
+  border: 1px dashed #b9c1d6;
+  background: #fff;
+  color: var(--blue);
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.repeat-add:hover {
+  background: #f3f5fd;
+  border-color: var(--blue);
+}
+
+/* ---------------------------------------------------------------- *
+ * Review and certification
+ * ---------------------------------------------------------------- */
+
+.review {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid var(--line-card);
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.review-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.review-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.review-edit {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line-card);
+  background: #fff;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--blue);
+  cursor: pointer;
+}
+
+.review-rows {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 10px 22px;
+}
+
+.review-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.review-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--faint);
+  letter-spacing: 0.02em;
+}
+
+.review-value {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.cert-body {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: #5b6170;
+}
+
+.cert-agree {
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+/* ---------------------------------------------------------------- *
+ * Action bar
+ * ---------------------------------------------------------------- */
+
+.footbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--line);
+  z-index: 6;
+}
+
+.footbar-inner {
+  padding: 12px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.foot-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.foot-hint {
+  font-size: 12.5px;
+  color: var(--faint);
+  font-weight: 600;
+}
+
+.foot-hint.is-error {
+  color: var(--danger);
+}
+
+.btn-back {
+  min-height: 46px;
+  padding: 0 16px;
+  border-radius: 11px;
+  border: 1px solid var(--line-field);
+  background: #fff;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.btn-next {
+  min-height: 46px;
+  padding: 0 22px;
+  border-radius: 11px;
+  border: none;
+  background: var(--blue);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(26, 29, 38, 0.18);
+}
+
+.btn-next:hover:not(:disabled) {
+  background: var(--blue-deep);
+}
+
+.btn-next:disabled {
+  opacity: 0.65;
+  cursor: progress;
+}
+
+.btn-ghost {
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 10px;
+  border: 1px solid var(--line-field);
+  background: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--ink);
+}
+
+/* ---------------------------------------------------------------- *
+ * Sent
+ * ---------------------------------------------------------------- */
+
+.done {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+}
+
+.done-inner {
+  max-width: 460px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+}
+
+.done-mark {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: #e4f5ec;
+  color: #15803d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 27px;
+  font-weight: 800;
+}
+
+.done-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.done-body {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.65;
+  color: #5b6170;
+}
+
+/* The reference code is read back over the phone, so it is set apart. */
+.done-ref {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  background: #eef0f5;
+  border-radius: 8px;
+  padding: 8px 14px;
+  letter-spacing: 0.06em;
+}
+
+/* Only shown when the submission itself failed. */
+.submit-error {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--danger);
+  line-height: 1.6;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/*
+ * Six step names do not fit across a phone.
+ *
+ * At 320px each gets about 38px — every one of them becomes "01 ข…",
+ * which tells nobody anything. The bars still show how far along someone
+ * is, "Step 1 of 6" sits right above them, and the full name of the step
+ * they are on is the heading immediately below. So the labels go, and
+ * nothing is actually lost.
+ */
+@media (max-width: 680px) {
+  .step-name {
+    /* Still read out by a screen reader; just not drawn. */
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .step-bars {
+    gap: 5px;
+  }
+
+  .step-bar {
+    height: 5px;
+  }
+
+  /* The bars are now the whole control, so keep them easy to hit. */
+  .step-btn {
+    padding-block: 6px;
+  }
+}
+
+/* On a phone the two actions need the full width more than they need
+   to sit at opposite ends. */
+@media (max-width: 460px) {
+  .footbar-inner {
+    gap: 8px;
+  }
+  .btn-next {
+    padding: 0 16px;
+  }
+  .foot-hint {
+    display: none;
+  }
+}

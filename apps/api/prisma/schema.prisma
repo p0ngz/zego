@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Thailand's 77 provinces, seeded from the public geography dataset.
+model Province {
+  code      Int        @id
+  nameTh    String
+  nameEn    String
+  districts District[]
+
+  @@index([nameTh])
+}
+
+/// Amphur, or khet inside Bangkok — where the "เขต" prefix is added on seed.
+model District {
+  code         Int           @id
+  nameTh       String
+  nameEn       String
+  provinceCode Int
+  province     Province      @relation(fields: [provinceCode], references: [code], onDelete: Cascade)
+  subdistricts Subdistrict[]
+
+  @@index([provinceCode])
+  @@index([nameTh])
+}
+
+/// Tambon, or khwaeng. The post code lives here: one district can span several.
+model Subdistrict {
+  code         Int      @id
+  nameTh       String
+  nameEn       String
+  postalCode   String   @db.VarChar(5)
+  districtCode Int
+  district     District @relation(fields: [districtCode], references: [code], onDelete: Cascade)
+
+  /// Every post code lookup starts here, so this index carries the form.
+  @@index([postalCode])
+  @@index([districtCode])
+}
+
+enum InstitutionKind {
+  SCHOOL
+  UNIVERSITY
+  RAJABHAT
+  RAJAMANGALA
+  PRIVATE
+  VOCATIONAL
+  OTHER
+}
+
+/// Schools and universities offered as suggestions — a person may still
+/// type something that is not on the list.
+model Institution {
+  id     Int             @id @default(autoincrement())
+  nameTh String          @unique
+  nameEn String
+  kind   InstitutionKind @default(UNIVERSITY)
+
+  @@index([nameTh])
+}
+
+/// Fields of study, offered as suggestions on the education step. A
+/// person may still type something that is not on the list.
+model Major {
+  id     Int    @id @default(autoincrement())
+  nameTh String @unique
+  nameEn String
+
+  @@index([nameTh])
+}
+
+enum ApplicationStatus {
+  NEW
+  REVIEWING
+  INTERVIEW
+  OFFER
+  REJECTED
+}
+
+/// A submitted application.
+///
+/// The answers stay as the two JSON blobs the form produced, so adding a
+/// question to the catalog never needs a migration. The handful of columns
+/// beside them are the ones a coordinator lists and searches by.
+model Application {
+  id          String            @id @default(uuid())
+  /// Short human-readable code quoted back to the applicant, e.g. ZG-7F3K2A.
+  reference   String            @unique
+  lang        String            @db.VarChar(2)
+  status      ApplicationStatus @default(NEW)
+
+  firstName   String
+  lastName    String
+  email       String
+  tel         String
+  /// Resolved label, so a list does not have to re-read the catalog.
+  position    String
+
+  values      Json
+  repeats     Json
+
+  submittedAt DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([submittedAt])
+  @@index([email])
+  @@index([status])
+}

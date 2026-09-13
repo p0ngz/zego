@@ -1,0 +1,23 @@
+{
+  "name": "zego",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Applicant intake and review for hiring teams",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=@zego/api & npm run dev --workspace=@zego/web",
+    "dev:api": "npm run dev --workspace=@zego/api",
+    "dev:web": "npm run dev --workspace=@zego/web",
+    "build": "npm run build --workspace=@zego/api && npm run build --workspace=@zego/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspace=@zego/api",
+    "seed": "npm run seed --workspace=@zego/api"
+  },
+  "engines": {
+    "node": ">=20.11"
+  }
+}

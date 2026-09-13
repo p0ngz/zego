@@ -1,0 +1,24 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: zego-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: zego
+      POSTGRES_PASSWORD: zego
+      POSTGRES_DB: zego
+      # Thai collation for ORDER BY on institution and major names.
+      POSTGRES_INITDB_ARGS: '--locale=C.UTF-8 --encoding=UTF8'
+    ports:
+      # 5440 on the host: 5436 and 5438 are already taken by other projects.
+      - '5440:5432'
+    volumes:
+      - zego-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U zego -d zego']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  zego-db-data:

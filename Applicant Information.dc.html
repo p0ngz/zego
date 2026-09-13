@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f5f6f9;font-family:Manrope,"Noto Sans Thai",system-ui,sans-serif;color:#1a1d26;-webkit-font-smoothing:antialiased}
+a{color:#3b5bdb}a:hover{color:#2f49b8}
+input,select,textarea,button{font-family:inherit}
+input::placeholder,textarea::placeholder{color:#9aa0ae}
+</style>
+</helmet>
+<div style="min-height:100vh;display:flex;flex-direction:column">
+
+<header style="background:#fff;border-bottom:1px solid #e6e8ee;position:sticky;top:0;z-index:5">
+  <div style="max-width:780px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;justify-content:space-between;gap:14px">
+    <div style="display:flex;align-items:center;gap:10px;min-width:0">
+      <div style="width:26px;height:26px;border-radius:8px;background:#3b5bdb;flex:none"></div>
+      <span style="font-weight:700;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ brandLine }}</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;flex:none">
+      <div style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:#5e8a6e;font-weight:700">
+        <span style="width:7px;height:7px;border-radius:50%;background:#3f9d63"></span>{{ saveLabel }}
+      </div>
+      <div style="display:flex;background:#eef0f5;border-radius:999px;padding:3px;gap:2px">
+        <button type="button" onClick="{{ setTh }}" style="height:28px;padding:0 12px;border:none;border-radius:999px;font-size:12.5px;font-weight:800;cursor:pointer;background:{{ thBg }};color:{{ thColor }}">ไทย</button>
+        <button type="button" onClick="{{ setEn }}" style="height:28px;padding:0 12px;border:none;border-radius:999px;font-size:12.5px;font-weight:800;cursor:pointer;background:{{ enBg }};color:{{ enColor }}">EN</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<sc-if value="{{ submitted }}" hint-placeholder-val="{{ false }}">
+<main style="flex:1;display:flex;align-items:center;justify-content:center;padding:64px 24px">
+  <div style="max-width:460px;text-align:center;display:flex;flex-direction:column;gap:14px;align-items:center">
+    <div style="width:58px;height:58px;border-radius:50%;background:#e4f5ec;color:#15803d;display:flex;align-items:center;justify-content:center;font-size:27px;font-weight:800">✓</div>
+    <h1 style="margin:0;font-size:26px;font-weight:800;letter-spacing:-.01em">{{ doneTitle }}</h1>
+    <p style="margin:0;font-size:15px;line-height:1.65;color:#5b6170">{{ doneBody }}</p>
+    <button type="button" onClick="{{ restart }}" style="margin-top:6px;height:44px;padding:0 20px;border-radius:10px;border:1px solid #d7dbe3;background:#fff;font-size:14px;font-weight:700;cursor:pointer;color:#1a1d26">{{ doneAgain }}</button>
+  </div>
+</main>
+</sc-if>
+
+<sc-if value="{{ editing }}" hint-placeholder-val="{{ true }}">
+<main style="flex:1;width:100%;max-width:780px;margin:0 auto;padding:26px 22px 132px;box-sizing:border-box;display:flex;flex-direction:column;gap:30px">
+
+  <nav style="display:flex;flex-direction:column;gap:12px">
+    <div style="font-size:12.5px;font-weight:800;color:#3b5bdb;letter-spacing:.03em">{{ stepCounter }}</div>
+    <div style="display:flex;gap:6px">
+      <sc-for list="{{ steps }}" as="s" hint-placeholder-count="6">
+        <button type="button" onClick="{{ s.go }}" title="{{ s.name }}" style="flex:1;min-width:0;display:flex;flex-direction:column;gap:7px;padding:0;background:none;border:none;cursor:pointer;text-align:left">
+          <span style="display:block;height:4px;border-radius:2px;background:{{ s.bar }}"></span>
+          <span style="font-size:11.5px;font-weight:700;color:{{ s.color }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;width:100%">{{ s.num }} {{ s.name }}</span>
+        </button>
+      </sc-for>
+    </div>
+  </nav>
+
+  <div style="display:flex;flex-direction:column;gap:7px">
+    <h1 style="margin:0;font-size:27px;font-weight:800;letter-spacing:-.015em;line-height:1.25">{{ stepTitle }}</h1>
+    <p style="margin:0;font-size:14.5px;color:#6b7180;line-height:1.6;max-width:58ch">{{ stepLede }}</p>
+  </div>
+
+  <sc-for list="{{ blocks }}" as="b" hint-placeholder-count="3">
+    <section style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;padding-bottom:2px;border-bottom:1px solid #e6e8ee">
+        <h2 style="margin:0;font-size:15.5px;font-weight:800">{{ b.title }}</h2>
+        <span style="font-size:12.5px;color:#9aa0ae;font-weight:600">{{ b.sub }}</span>
+      </div>
+
+      <sc-if value="{{ b.isFields }}" hint-placeholder-val="{{ true }}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:16px 20px">
+          <sc-for list="{{ b.fields }}" as="f" hint-placeholder-count="4">
+            <div style="display:flex;flex-direction:column;gap:6px;min-width:0;grid-column:{{ f.span }}">
+              <span style="font-size:13px;font-weight:700;color:#3a3f4b;line-height:1.4;display:{{ f.labelDisplay }}">{{ f.label }} <span style="color:#9aa0ae;font-weight:600;font-size:12px">{{ f.sub }}</span></span>
+              <sc-if value="{{ f.isCheck }}" hint-placeholder-val="{{ false }}">
+                <button type="button" onClick="{{ f.toggle }}" style="display:flex;align-items:flex-start;gap:10px;text-align:left;background:none;border:none;padding:2px 0;cursor:pointer">
+                  <span style="flex:none;width:22px;height:22px;border-radius:6px;border:1px solid {{ f.checkBorder }};background:{{ f.checkBg }};color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800">{{ f.checkMark }}</span>
+                  <span style="display:flex;flex-direction:column;gap:2px">
+                    <span style="font-size:14px;font-weight:700;color:#1a1d26;line-height:1.45">{{ f.label }}</span>
+                    <span style="font-size:12.5px;font-weight:600;color:#8a90a0;line-height:1.5">{{ f.sub }}</span>
+                  </span>
+                </button>
+              </sc-if>
+              <sc-if value="{{ f.isInput }}" hint-placeholder-val="{{ true }}">
+                <input type="{{ f.inputType }}" value="{{ f.value }}" onChange="{{ f.onChange }}" placeholder="{{ f.ph }}" readOnly="{{ f.readOnly }}" style="width:100%;box-sizing:border-box;height:44px;padding:0 14px;border:1px solid {{ f.borderColor }};border-radius:10px;font-size:15px;color:#1a1d26;background:{{ f.inputBg }};outline:none" style-focus="border-color:#3b5bdb;box-shadow:0 0 0 3px rgba(59,91,219,.15)">
+              </sc-if>
+              <sc-if value="{{ f.isSelect }}" hint-placeholder-val="{{ false }}">
+                <select value="{{ f.value }}" onChange="{{ f.onChange }}" style="width:100%;box-sizing:border-box;height:44px;padding:0 38px 0 13px;border:1px solid {{ f.borderColor }};border-radius:10px;font-size:15px;font-weight:600;color:{{ f.selColor }};background-color:#fff;background-image:url(&quot;data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1.5 6 6.5l5-5' fill='none' stroke='%236b7180' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>&quot;);background-repeat:no-repeat;background-position:right 14px center;appearance:none;outline:none;cursor:pointer" style-focus="border-color:#3b5bdb;box-shadow:0 0 0 3px rgba(59,91,219,.15)">
+                  <sc-for list="{{ f.selOpts }}" as="o" hint-placeholder-count="4">
+                    <option value="{{ o.value }}">{{ o.label }}</option>
+                  </sc-for>
+                </select>
+              </sc-if>
+              <sc-if value="{{ f.isArea }}" hint-placeholder-val="{{ false }}">
+                <textarea value="{{ f.value }}" onChange="{{ f.onChange }}" placeholder="{{ f.ph }}" rows="3" style="width:100%;box-sizing:border-box;padding:11px 14px;border:1px solid {{ f.borderColor }};border-radius:10px;font-size:15px;line-height:1.6;color:#1a1d26;background:#fff;outline:none;resize:vertical" style-focus="border-color:#3b5bdb;box-shadow:0 0 0 3px rgba(59,91,219,.15)"></textarea>
+              </sc-if>
+              <sc-if value="{{ f.isChips }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-wrap:wrap;gap:8px">
+                  <sc-for list="{{ f.opts }}" as="o" hint-placeholder-count="2">
+                    <button type="button" onClick="{{ o.pick }}" style="min-height:40px;padding:8px 16px;border-radius:999px;font-size:13.5px;font-weight:700;line-height:1.3;cursor:pointer;border:1px solid {{ o.border }};background:{{ o.bg }};color:{{ o.color }}">{{ o.label }}</button>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <sc-if value="{{ f.error }}" hint-placeholder-val="{{ false }}">
+                <span style="font-size:12.5px;color:#c2410c;font-weight:700">{{ f.error }}</span>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ b.isRepeat }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <sc-for list="{{ b.items }}" as="it" hint-placeholder-count="1">
+            <div style="background:#fff;border:1px solid #e3e6ee;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:14px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                <span style="font-size:13px;font-weight:800;color:#3b5bdb;letter-spacing:.02em">{{ it.title }}</span>
+                <button type="button" onClick="{{ it.remove }}" style="height:30px;padding:0 11px;border-radius:8px;border:1px solid #e3e6ee;background:#fff;font-size:12.5px;font-weight:700;color:#8a5040;cursor:pointer">{{ it.removeLabel }}</button>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px 18px">
+                <sc-for list="{{ it.fields }}" as="f" hint-placeholder-count="4">
+                  <div style="display:flex;flex-direction:column;gap:6px;min-width:0;grid-column:{{ f.span }}">
+                    <span style="font-size:12.5px;font-weight:700;color:#3a3f4b;line-height:1.4">{{ f.label }} <span style="color:#9aa0ae;font-weight:600;font-size:11.5px">{{ f.sub }}</span></span>
+                    <sc-if value="{{ f.isInput }}" hint-placeholder-val="{{ true }}">
+                      <input type="{{ f.inputType }}" value="{{ f.value }}" onChange="{{ f.onChange }}" placeholder="{{ f.ph }}" style="width:100%;box-sizing:border-box;height:42px;padding:0 13px;border:1px solid {{ f.borderColor }};border-radius:10px;font-size:14.5px;color:#1a1d26;background:#fff;outline:none" style-focus="border-color:#3b5bdb;box-shadow:0 0 0 3px rgba(59,91,219,.15)">
+                    </sc-if>
+                    <sc-if value="{{ f.isCombo }}" hint-placeholder-val="{{ false }}">
+                      <div style="position:relative">
+                        <input value="{{ f.value }}" onChange="{{ f.onChange }}" onFocus="{{ f.focus }}" onBlur="{{ f.blur }}" placeholder="{{ f.ph }}" autoComplete="off" style="width:100%;box-sizing:border-box;height:42px;padding:0 13px;border:1px solid {{ f.borderColor }};border-radius:10px;font-size:14.5px;color:#1a1d26;background:#fff;outline:none" style-focus="border-color:#3b5bdb;box-shadow:0 0 0 3px rgba(59,91,219,.15)">
+                        <sc-if value="{{ f.comboOpen }}" hint-placeholder-val="{{ false }}">
+                          <div style="position:absolute;top:46px;left:0;right:0;z-index:20;background:#fff;border:1px solid #dfe3ec;border-radius:12px;box-shadow:0 12px 28px rgba(26,29,38,.14);padding:6px;max-height:264px;overflow:auto">
+                            <sc-for list="{{ f.comboItems }}" as="c" hint-placeholder-count="4">
+                              <button type="button" onClick="{{ c.pick }}" style="display:block;width:100%;text-align:left;padding:10px 12px;border:none;border-radius:8px;background:none;font-size:14px;font-weight:600;color:#1a1d26;cursor:pointer;line-height:1.4" style-hover="background:#f0f3fd;color:#3b5bdb">{{ c.label }}</button>
+                            </sc-for>
+                            <div style="padding:8px 12px 4px;font-size:11.5px;font-weight:700;color:#a7adba">{{ f.comboNote }}</div>
+                          </div>
+                        </sc-if>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ f.isArea }}" hint-placeholder-val="{{ false }}">
+                      <textarea value="{{ f.value }}" onChange="{{ f.onChange }}" placeholder="{{ f.ph }}" rows="2" style="width:100%;box-sizing:border-box;padding:10px 13px;border:1px solid {{ f.borderColor }};border-radius:10px;font-size:14.5px;line-height:1.6;color:#1a1d26;background:#fff;outline:none;resize:vertical" style-focus="border-color:#3b5bdb;box-shadow:0 0 0 3px rgba(59,91,219,.15)"></textarea>
+                    </sc-if>
+                    <sc-if value="{{ f.isChips }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;flex-wrap:wrap;gap:7px">
+                        <sc-for list="{{ f.opts }}" as="o" hint-placeholder-count="3">
+                          <button type="button" onClick="{{ o.pick }}" style="min-height:36px;padding:7px 14px;border-radius:999px;font-size:13px;font-weight:700;line-height:1.3;cursor:pointer;border:1px solid {{ o.border }};background:{{ o.bg }};color:{{ o.color }}">{{ o.label }}</button>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ f.error }}" hint-placeholder-val="{{ false }}">
+                      <span style="font-size:12px;color:#c2410c;font-weight:700">{{ f.error }}</span>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+
+          <sc-if value="{{ b.isEmpty }}" hint-placeholder-val="{{ true }}">
+            <p style="margin:0;font-size:13.5px;color:#8a90a0;line-height:1.6">{{ b.emptyHint }}</p>
+          </sc-if>
+
+          <button type="button" onClick="{{ b.add }}" style="align-self:flex-start;min-height:42px;padding:9px 16px;border-radius:10px;border:1px dashed #b9c1d6;background:#fff;color:#3b5bdb;font-size:14px;font-weight:800;cursor:pointer" style-hover="background:#f3f5fd;border-color:#3b5bdb">{{ b.addLabel }}</button>
+
+          <sc-if value="{{ b.error }}" hint-placeholder-val="{{ false }}">
+            <span style="font-size:12.5px;color:#c2410c;font-weight:700">{{ b.error }}</span>
+          </sc-if>
+        </div>
+      </sc-if>
+    </section>
+  </sc-for>
+
+  <sc-if value="{{ isReview }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <sc-for list="{{ summary }}" as="g" hint-placeholder-count="4">
+        <section style="background:#fff;border:1px solid #e3e6ee;border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+            <h2 style="margin:0;font-size:15px;font-weight:800">{{ g.title }}</h2>
+            <button type="button" onClick="{{ g.edit }}" style="height:32px;padding:0 12px;border-radius:8px;border:1px solid #e3e6ee;background:#fff;font-size:12.5px;font-weight:700;color:#3b5bdb;cursor:pointer">{{ g.editLabel }}</button>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px 22px">
+            <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="4">
+              <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+                <span style="font-size:11.5px;font-weight:700;color:#9aa0ae;letter-spacing:.02em">{{ r.label }}</span>
+                <span style="font-size:14px;font-weight:600;line-height:1.5;color:#1a1d26;overflow-wrap:anywhere">{{ r.value }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </sc-for>
+
+      <div style="background:#fff;border:1px solid #e3e6ee;border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:12px">
+        <h2 style="margin:0;font-size:15px;font-weight:800">{{ certTitle }}</h2>
+        <p style="margin:0;font-size:13.5px;line-height:1.75;color:#5b6170">{{ certBody }}</p>
+        <button type="button" onClick="{{ toggleCert }}" style="display:flex;align-items:flex-start;gap:10px;text-align:left;background:none;border:none;padding:0;cursor:pointer">
+          <span style="flex:none;width:22px;height:22px;border-radius:6px;border:1px solid {{ certBorder }};background:{{ certBg }};color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;margin-top:1px">{{ certMark }}</span>
+          <span style="font-size:13.5px;font-weight:700;line-height:1.5;color:#1a1d26">{{ certAgree }}</span>
+        </button>
+        <sc-if value="{{ certError }}" hint-placeholder-val="{{ false }}">
+          <span style="font-size:12.5px;color:#c2410c;font-weight:700">{{ certError }}</span>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+</main>
+
+<div style="position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-top:1px solid #e6e8ee;z-index:6">
+  <div style="max-width:780px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+    <button type="button" onClick="{{ back }}" style="min-height:46px;padding:0 16px;border-radius:11px;border:1px solid #d7dbe3;background:#fff;font-size:14.5px;font-weight:700;color:{{ backColor }};cursor:{{ backCursor }};visibility:{{ backVis }}">{{ backLabel }}</button>
+    <div style="display:flex;align-items:center;gap:14px">
+      <span style="font-size:12.5px;color:#9aa0ae;font-weight:600;display:{{ hintDisplay }}">{{ footHint }}</span>
+      <button type="button" onClick="{{ next }}" style="min-height:46px;padding:0 22px;border-radius:11px;border:none;background:#3b5bdb;color:#fff;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 1px 2px rgba(26,29,38,.18)" style-hover="background:#3350c4">{{ nextLabel }}</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:900,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  state = {
+    lang: 'th', step: 1, submitted: false, certified: false, showErr: false,
+    saveLabel: '', d: {}, rep: { siblings: [], education: [], work: [], languages: [], refs: [] }
+  };
+
+  componentDidMount() {
+    try {
+      const raw = localStorage.getItem('applicantForm.v2');
+      if (raw) {
+        const p = JSON.parse(raw);
+        this.setState({ d: p.d || {}, rep: Object.assign({ siblings: [], education: [], work: [], languages: [], refs: [] }, p.rep || {}), step: p.step || 1, lang: p.lang || 'th', saveLabel: this.t('บันทึกแล้ว', 'Saved') });
+      } else this.setState({ saveLabel: this.t('บันทึกอัตโนมัติ', 'Autosave on') });
+    } catch (e) { }
+  }
+
+  positions = [
+    ['fullstack', 'Fullstack Developer', 'Fullstack Developer'],
+    ['frontend', 'Frontend Developer', 'Frontend Developer'],
+    ['backend', 'Backend Developer', 'Backend Developer'],
+    ['itsupport', 'IT Support', 'IT Support'],
+    ['ba', 'Business / System Analyst', 'Business / System Analyst'],
+    ['other', 'อื่นๆ', 'Other']
+  ];
+
+  /* sample postcode dataset — swap for the full Thailand Post table in production */
+  postcodes = {
+    '10520': ['กรุงเทพมหานคร', 'Bangkok', [['เขตลาดกระบัง', 'Lat Krabang', [['ลาดกระบัง', 'Lat Krabang'], ['คลองสองต้นนุ่น', 'Khlong Song Ton Nun'], ['คลองสามประเวศ', 'Khlong Sam Prawet'], ['ลำปลาทิว', 'Lam Pla Thio'], ['ทับยาว', 'Thap Yao'], ['ขุมทอง', 'Khum Thong']]]]],
+    '10600': ['กรุงเทพมหานคร', 'Bangkok', [['เขตธนบุรี', 'Thon Buri', [['วัดกัลยาณ์', 'Wat Kanlaya'], ['หิรัญรูจี', 'Hiran Ruchi'], ['บางยี่เรือ', 'Bang Yi Ruea'], ['บุคคโล', 'Bukkhalo'], ['ตลาดพลู', 'Talat Phlu'], ['ดาวคะนอง', 'Dao Khanong'], ['สำเหร่', 'Samre']]], ['เขตคลองสาน', 'Khlong San', [['สมเด็จเจ้าพระยา', 'Somdet Chao Phraya'], ['คลองสาน', 'Khlong San'], ['บางลำภูล่าง', 'Bang Lamphu Lang'], ['คลองต้นไทร', 'Khlong Ton Sai']]]]],
+    '10110': ['กรุงเทพมหานคร', 'Bangkok', [['เขตคลองเตย', 'Khlong Toei', [['คลองเตย', 'Khlong Toei'], ['คลองตัน', 'Khlong Tan'], ['พระโขนง', 'Phra Khanong']]], ['เขตวัฒนา', 'Watthana', [['คลองเตยเหนือ', 'Khlong Toei Nuea'], ['คลองตันเหนือ', 'Khlong Tan Nuea'], ['พระโขนงเหนือ', 'Phra Khanong Nuea']]]]],
+    '10330': ['กรุงเทพมหานคร', 'Bangkok', [['เขตปทุมวัน', 'Pathum Wan', [['ลุมพินี', 'Lumphini'], ['ปทุมวัน', 'Pathum Wan'], ['รองเมือง', 'Rong Mueang'], ['วังใหม่', 'Wang Mai']]]]],
+    '10400': ['กรุงเทพมหานคร', 'Bangkok', [['เขตราชเทวี', 'Ratchathewi', [['ทุ่งพญาไท', 'Thung Phaya Thai'], ['ถนนพญาไท', 'Thanon Phaya Thai'], ['ถนนเพชรบุรี', 'Thanon Phetchaburi'], ['มักกะสัน', 'Makkasan']]], ['เขตดินแดง', 'Din Daeng', [['ดินแดง', 'Din Daeng'], ['รัชดาภิเษก', 'Ratchadaphisek']]]]],
+    '10900': ['กรุงเทพมหานคร', 'Bangkok', [['เขตจตุจักร', 'Chatuchak', [['ลาดยาว', 'Lat Yao'], ['จตุจักร', 'Chatuchak'], ['จอมพล', 'Chom Phon'], ['จันทรเกษม', 'Chan Kasem'], ['เสนานิคม', 'Sena Nikhom']]]]],
+    '10240': ['กรุงเทพมหานคร', 'Bangkok', [['เขตบางกะปิ', 'Bang Kapi', [['คลองจั่น', 'Khlong Chan'], ['หัวหมาก', 'Hua Mak']]]]],
+    '10120': ['กรุงเทพมหานคร', 'Bangkok', [['เขตสาทร', 'Sathon', [['ทุ่งวัดดอน', 'Thung Wat Don'], ['ยานนาวา', 'Yan Nawa'], ['ทุ่งมหาเมฆ', 'Thung Maha Mek']]]]],
+    '11000': ['นนทบุรี', 'Nonthaburi', [['เมืองนนทบุรี', 'Mueang Nonthaburi', [['สวนใหญ่', 'Suan Yai'], ['ตลาดขวัญ', 'Talat Khwan'], ['บางเขน', 'Bang Khen'], ['ท่าทราย', 'Tha Sai'], ['บางกระสอ', 'Bang Kraso']]]]],
+    '12000': ['ปทุมธานี', 'Pathum Thani', [['เมืองปทุมธานี', 'Mueang Pathum Thani', [['บางปรอก', 'Bang Prok'], ['บ้านใหม่', 'Ban Mai'], ['บางขะแยง', 'Bang Khayaeng'], ['บางหลวง', 'Bang Luang']]]]],
+    '20000': ['ชลบุรี', 'Chon Buri', [['เมืองชลบุรี', 'Mueang Chon Buri', [['บางปลาสร้อย', 'Bang Pla Soi'], ['มะขามหย่ง', 'Makham Yong'], ['บ้านสวน', 'Ban Suan'], ['หนองรี', 'Nong Ri']]]]],
+    '40000': ['ขอนแก่น', 'Khon Kaen', [['เมืองขอนแก่น', 'Mueang Khon Kaen', [['ในเมือง', 'Nai Mueang'], ['ศิลา', 'Sila'], ['บ้านเป็ด', 'Ban Pet'], ['เมืองเก่า', 'Mueang Kao']]]]],
+    '50200': ['เชียงใหม่', 'Chiang Mai', [['เมืองเชียงใหม่', 'Mueang Chiang Mai', [['ศรีภูมิ', 'Si Phum'], ['พระสิงห์', 'Phra Sing'], ['ช้างม่อย', 'Chang Moi'], ['ช้างเผือก', 'Chang Phueak'], ['สุเทพ', 'Suthep']]]]],
+    '83000': ['ภูเก็ต', 'Phuket', [['เมืองภูเก็ต', 'Mueang Phuket', [['ตลาดใหญ่', 'Talat Yai'], ['ตลาดเหนือ', 'Talat Nuea'], ['รัษฎา', 'Ratsada'], ['วิชิต', 'Wichit']]]]]
+  };
+
+  institutions = [
+    'จุฬาลงกรณ์มหาวิทยาลัย', 'มหาวิทยาลัยธรรมศาสตร์', 'มหาวิทยาลัยเกษตรศาสตร์', 'มหาวิทยาลัยมหิดล',
+    'มหาวิทยาลัยศิลปากร', 'มหาวิทยาลัยศรีนครินทรวิโรฒ', 'มหาวิทยาลัยเชียงใหม่', 'มหาวิทยาลัยขอนแก่น',
+    'มหาวิทยาลัยสงขลานครินทร์', 'มหาวิทยาลัยบูรพา', 'มหาวิทยาลัยนเรศวร', 'มหาวิทยาลัยมหาสารคาม',
+    'มหาวิทยาลัยแม่โจ้', 'มหาวิทยาลัยแม่ฟ้าหลวง', 'มหาวิทยาลัยวลัยลักษณ์', 'มหาวิทยาลัยอุบลราชธานี',
+    'มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าธนบุรี', 'สถาบันเทคโนโลยีพระจอมเกล้าเจ้าคุณทหารลาดกระบัง',
+    'มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ', 'มหาวิทยาลัยเทคโนโลยีสุรนารี',
+    'สถาบันบัณฑิตพัฒนบริหารศาสตร์ (NIDA)', 'มหาวิทยาลัยรามคำแหง', 'มหาวิทยาลัยสุโขทัยธรรมาธิราช',
+    'มหาวิทยาลัยเทคโนโลยีราชมงคลธัญบุรี', 'มหาวิทยาลัยเทคโนโลยีราชมงคลกรุงเทพ',
+    'มหาวิทยาลัยราชภัฏสวนสุนันทา', 'มหาวิทยาลัยราชภัฏจันทรเกษม', 'มหาวิทยาลัยราชภัฏพระนคร',
+    'มหาวิทยาลัยกรุงเทพ', 'มหาวิทยาลัยรังสิต', 'มหาวิทยาลัยหอการค้าไทย', 'มหาวิทยาลัยอัสสัมชัญ (ABAC)',
+    'มหาวิทยาลัยศรีปทุม', 'มหาวิทยาลัยธุรกิจบัณฑิตย์', 'มหาวิทยาลัยหัวเฉียวเฉลิมพระเกียรติ',
+    'วิทยาลัยเทคนิคกรุงเทพ', 'วิทยาลัยพาณิชยการธนบุรี', 'วิทยาลัยเทคโนโลยีสยาม'
+  ];
+
+  majors = [
+    'วิศวกรรมคอมพิวเตอร์', 'วิทยาการคอมพิวเตอร์', 'เทคโนโลยีสารสนเทศ', 'วิศวกรรมซอฟต์แวร์',
+    'ระบบสารสนเทศทางธุรกิจ', 'วิทยาศาสตร์ข้อมูล', 'วิศวกรรมไฟฟ้า', 'วิศวกรรมอิเล็กทรอนิกส์',
+    'วิศวกรรมโทรคมนาคม', 'วิศวกรรมเครื่องกล', 'วิศวกรรมโยธา', 'วิศวกรรมอุตสาหการ',
+    'บริหารธุรกิจ', 'การจัดการ', 'การตลาด', 'การบัญชี', 'การเงินและการธนาคาร',
+    'เศรษฐศาสตร์', 'การจัดการโลจิสติกส์', 'ทรัพยากรมนุษย์',
+    'นิเทศศาสตร์', 'ออกแบบนิเทศศิลป์', 'ออกแบบผลิตภัณฑ์', 'สถาปัตยกรรม',
+    'อักษรศาสตร์ / ศิลปศาสตร์', 'ภาษาอังกฤษ', 'ภาษาญี่ปุ่น', 'ภาษาจีน',
+    'นิติศาสตร์', 'รัฐศาสตร์', 'ครุศาสตร์ / ศึกษาศาสตร์',
+    'คณิตศาสตร์', 'สถิติ', 'ฟิสิกส์', 'เคมี', 'ชีววิทยา',
+    'วิทยาศาสตร์-คณิตศาสตร์ (สายมัธยม)', 'ศิลป์-ภาษา (สายมัธยม)',
+    'พยาบาลศาสตร์', 'สาธารณสุขศาสตร์', 'เทคโนโลยีการอาหาร', 'เกษตรศาสตร์'
+  ];
+
+  ak(pfx, name) { return pfx ? pfx + name.charAt(0).toUpperCase() + name.slice(1) : name; }
+  pcEntry(pfx) { return this.postcodes[(this.state.d[this.ak(pfx || '', 'postcode')] || '').trim()] || null; }
+  pcDistricts(pfx) { const e = this.pcEntry(pfx); return e ? e[2].map(x => [x[0], x[0], x[1]]) : null; }
+  pcSubs(pfx) {
+    const e = this.pcEntry(pfx); if (!e) return null;
+    const dEntry = e[2].find(x => x[0] === this.state.d[this.ak(pfx || '', 'district')]);
+    return dEntry ? dEntry[2].map(x => [x[0], x[0], x[1]]) : null;
+  }
+
+  /* one address layout, reused for the applicant and the emergency contact */
+  addrFields(pfx, when) {
+    const K = n => this.ak(pfx, n);
+    const has = !!this.pcEntry(pfx);
+    const dists = this.pcDistricts(pfx);
+    const subs = this.pcSubs(pfx);
+    const gate = f => (when ? Object.assign({}, f, { when: when }) : f);
+    return [
+      gate({ k: K('postcode'), th: 'รหัสไปรษณีย์', en: 'Post code', req: 1, ph: '10520', pcode: 1,
+        hintTh: has ? 'เติมจังหวัดให้แล้ว' : 'กรอกก่อน เพื่อเลือกเขต/แขวงได้', hintEn: has ? 'Province filled in for you' : 'Enter this first to pick your district' }),
+      gate({ k: K('province'), th: 'จังหวัด', en: 'Province', req: 1, ro: has ? 1 : 0 }),
+      gate(dists
+        ? { k: K('district'), th: 'อำเภอ / เขต', en: 'District (Amphur)', type: 'select', req: 1, opts: dists }
+        : { k: K('district'), th: 'อำเภอ / เขต', en: 'District (Amphur)', req: 1 }),
+      gate(subs
+        ? { k: K('subDistrict'), th: 'ตำบล / แขวง', en: 'Sub-district', type: 'select', req: 1, opts: subs }
+        : { k: K('subDistrict'), th: 'ตำบล / แขวง', en: 'Sub-district', req: 1 }),
+      gate({ k: K('addrNo'), th: 'บ้านเลขที่', en: 'Address no.', req: 1 }),
+      gate({ k: K('moo'), th: 'หมู่ที่', en: 'Moo', opt: 1 }),
+      gate({ k: K('road'), th: 'ถนน', en: 'Road', opt: 1 })
+    ];
+  }
+
+  presentAddrText() {
+    const d = this.state.d;
+    const parts = [d.addrNo && (this.t('เลขที่ ', 'No. ') + d.addrNo), d.moo && (this.t('หมู่ ', 'Moo ') + d.moo), d.road, d.subDistrict, d.district, d.province, d.postcode];
+    return parts.filter(Boolean).join(' ') || this.t('ยังไม่ได้กรอกที่อยู่ปัจจุบัน', 'Present address not filled in yet');
+  }
+
+  t(th, en) { return this.state.lang === 'th' ? th : en; }
+  alt(th, en) { return this.state.lang === 'th' ? en : th; }
+
+  persist() {
+    try { localStorage.setItem('applicantForm.v2', JSON.stringify({ d: this.state.d, rep: this.state.rep, step: this.state.step, lang: this.state.lang })); } catch (e) { }
+    this.setState({ saveLabel: this.t('กำลังบันทึก…', 'Saving…') });
+    clearTimeout(this._sv);
+    this._sv = setTimeout(() => this.setState({ saveLabel: this.t('บันทึกแล้วเมื่อครู่', 'Saved just now') }), 550);
+  }
+
+  setField(k, v) {
+    this.setState(s => {
+      const d = Object.assign({}, s.d, { [k]: v });
+      const pfx = k === 'postcode' || k === 'district' ? '' : (k === 'emgPostcode' || k === 'emgDistrict' ? 'emg' : null);
+      if (pfx !== null && /postcode$/i.test(k)) {
+        const e = this.postcodes[(v || '').trim()];
+        if (e) {
+          d[this.ak(pfx, 'province')] = s.lang === 'th' ? e[0] : e[1];
+          if (!e[2].some(x => x[0] === d[this.ak(pfx, 'district')])) { d[this.ak(pfx, 'district')] = ''; d[this.ak(pfx, 'subDistrict')] = ''; }
+        }
+      }
+      if (pfx !== null && /district$/i.test(k) && !/subDistrict$/.test(k)) d[this.ak(pfx, 'subDistrict')] = '';
+      return { d: d };
+    }, () => this.persist());
+  }
+  setRep(key, i, k, v) {
+    this.setState(s => {
+      const arr = s.rep[key].slice();
+      arr[i] = Object.assign({}, arr[i], { [k]: v });
+      return { rep: Object.assign({}, s.rep, { [key]: arr }) };
+    }, () => this.persist());
+  }
+  addRep(key) { this.setState(s => ({ rep: Object.assign({}, s.rep, { [key]: s.rep[key].concat([{}]) }) }), () => this.persist()); }
+  delRep(key, i) { this.setState(s => ({ rep: Object.assign({}, s.rep, { [key]: s.rep[key].filter((_, j) => j !== i) }) }), () => this.persist()); }
+
+  /* ---------- catalog: mirrors the paper form, regrouped ---------- */
+  catalog() {
+    const d = this.state.d;
+    const yn = [['no', 'ไม่ได้', 'No'], ['yes', 'ได้', 'Yes']];
+    const ever = [['yes', 'เคย', 'Yes'], ['no', 'ไม่เคย', 'No']];
+    const lvl = [['good', 'ดี', 'Good'], ['fair', 'ปานกลาง', 'Fair'], ['poor', 'พอใช้', 'Poor']];
+    return [
+      /* STEP 1 */
+      { step: 1, th: 'ตำแหน่งที่สมัคร', en: 'Position applied for', fields: [
+        { k: 'position1', th: 'ตำแหน่งที่สมัคร 1', en: 'Position applied for', type: 'select', req: 1, opts: this.positions },
+        { k: 'position1Other', th: 'ระบุตำแหน่ง', en: 'Please specify position', req: 1, when: () => d.position1 === 'other' },
+        { k: 'position2', th: 'ตำแหน่งที่สมัคร 2', en: 'Second choice', type: 'select', opt: 1, opts: this.positions },
+        { k: 'position2Other', th: 'ระบุตำแหน่ง', en: 'Please specify position', req: 1, when: () => d.position2 === 'other' },
+        { k: 'salary', th: 'เงินเดือนที่ต้องการ', en: 'Expected salary', hintTh: 'บาท / เดือน', hintEn: 'Baht / month', req: 1, ph: '25,000' }
+      ] },
+      { step: 1, th: 'ชื่อ-นามสกุล', en: 'Your name', fields: [
+        { k: 'firstName', th: 'ชื่อ', en: 'Name', req: 1 },
+        { k: 'lastName', th: 'นามสกุล', en: 'Surname', req: 1 },
+        { k: 'nickname', th: 'ชื่อเล่น', en: 'Nick name', opt: 1 },
+        { k: 'dob', th: 'วัน เดือน ปีเกิด', en: 'Date of birth', type: 'date', req: 1, hintTh: this.ageHint(), hintEn: this.ageHint() },
+        { k: 'sex', th: 'เพศ', en: 'Sex', type: 'chips', req: 1, span: '1/-1', opts: [['male', 'ชาย', 'Male'], ['female', 'หญิง', 'Female']] }
+      ] },
+      { step: 1, th: 'ข้อมูลส่วนตัว', en: 'Personal information', fields: [
+        { k: 'nationality', th: 'สัญชาติ', en: 'Nationality', type: 'select', req: 1, opts: [['thai', 'ไทย', 'Thai'], ['lao', 'ลาว', 'Lao'], ['myanmar', 'พม่า', 'Myanmar'], ['cambodian', 'กัมพูชา', 'Cambodian'], ['vietnamese', 'เวียดนาม', 'Vietnamese'], ['chinese', 'จีน', 'Chinese'], ['other', 'อื่นๆ', 'Other']] },
+        { k: 'nationalityOther', th: 'ระบุสัญชาติ', en: 'Please specify nationality', req: 1, when: () => d.nationality === 'other' },
+        { k: 'race', th: 'เชื้อชาติ', en: 'Race', type: 'select', opts: [['thai', 'ไทย', 'Thai'], ['chinese', 'จีน', 'Chinese'], ['lao', 'ลาว', 'Lao'], ['myanmar', 'พม่า', 'Myanmar'], ['khmer', 'เขมร', 'Khmer'], ['other', 'อื่นๆ', 'Other']] },
+        { k: 'raceOther', th: 'ระบุเชื้อชาติ', en: 'Please specify race', req: 1, when: () => d.race === 'other' },
+        { k: 'religion', th: 'ศาสนา', en: 'Religion', type: 'select', opts: [['buddhism', 'พุทธ', 'Buddhism'], ['islam', 'อิสลาม', 'Islam'], ['christianity', 'คริสต์', 'Christianity'], ['hinduism', 'ฮินดู', 'Hinduism'], ['sikhism', 'ซิกข์', 'Sikhism'], ['none', 'ไม่นับถือศาสนา', 'No religion'], ['other', 'อื่นๆ', 'Other']] },
+        { k: 'religionOther', th: 'ระบุศาสนา', en: 'Please specify religion', req: 1, when: () => d.religion === 'other' },
+        { k: 'idCard', th: 'เลขที่บัตรประชาชน', en: 'Identity card no.', req: 1, ph: this.t('13 หลัก', '13 digits') },
+        { k: 'idExpiry', th: 'บัตรหมดอายุ', en: 'Expiration date', type: 'date' },
+        { k: 'height', th: 'ส่วนสูง', en: 'Height', hintTh: 'ซม.', hintEn: 'cm' },
+        { k: 'weight', th: 'น้ำหนัก', en: 'Weight', hintTh: 'กก.', hintEn: 'kgs' },
+        { k: 'marital', th: 'สถานภาพ', en: 'Marital status', type: 'chips', span: '1/-1', req: 1, opts: [['single', 'โสด', 'Single'], ['married', 'แต่งงาน', 'Married'], ['widowed', 'หม้าย', 'Widowed'], ['separated', 'แยกกัน', 'Separated']] },
+        { k: 'military', th: 'ภาวะทางทหาร', en: 'Military status', type: 'chips', span: '1/-1', when: () => d.sex === 'male', opts: [['exempted', 'ได้รับการยกเว้น', 'Exempted'], ['served', 'ปลดเป็นทหารกองหนุน', 'Served'], ['notyet', 'ยังไม่ได้รับการเกณฑ์', 'Not yet served']] }
+      ] },
+      /* STEP 2 */
+      { step: 2, th: 'ที่อยู่ปัจจุบัน', en: 'Present address', fields: this.addrFields('').concat([
+        { k: 'living', th: 'ลักษณะที่พัก', en: 'Living arrangement', type: 'chips', span: '1/-1', opts: [['parent', 'อาศัยกับครอบครัว', 'Living with parent'], ['own', 'บ้านตัวเอง', 'Own home'], ['hired', 'บ้านเช่า', 'Hired house'], ['hostel', 'หอพัก', 'Hiredflat / Hostel']] }
+      ]) },
+      { step: 2, th: 'ช่องทางติดต่อ', en: 'Contact details', fields: [
+        { k: 'tel', th: 'โทรศัพท์', en: 'Tel.', req: 1, ph: '09X XXX XXXX' },
+        { k: 'email', th: 'อีเมล', en: 'E-mail', req: 1, ph: 'name@email.com' },
+        { k: 'lineId', th: 'ไอดีไลน์', en: 'Line ID', opt: 1 },
+        { k: 'facebook', th: 'เฟสบุ๊ค', en: 'Facebook', opt: 1 },
+        { k: 'ig', th: 'ไอจี', en: 'IG / Instagram', opt: 1 }
+      ] },
+      { step: 2, th: 'ผู้ติดต่อกรณีฉุกเฉิน', en: 'Person to be notified in case of emergency', fields: [
+        { k: 'emgName', th: 'ชื่อ-นามสกุล', en: 'Name-surname', req: 1 },
+        { k: 'emgRelation', th: 'เกี่ยวข้องกับผู้สมัคร', en: 'Related to the applicant as', req: 1 },
+        { k: 'emgTel', th: 'โทร', en: 'Tel.', req: 1 },
+        { k: 'emgSameAddr', th: 'ใช้ที่อยู่เดียวกับที่อยู่ปัจจุบัน', en: 'Same as my present address', type: 'check', span: '1/-1',
+          hintTh: d.emgSameAddr ? this.presentAddrText() : '', hintEn: d.emgSameAddr ? this.presentAddrText() : '' }
+      ].concat(this.addrFields('emg', () => !d.emgSameAddr)) },
+      /* STEP 3 */
+      { step: 3, th: 'บิดา-มารดา', en: 'Parents', fields: [
+        { k: 'fatherName', th: 'บิดา ชื่อ-สกุล', en: "Father's name-surname", req: 1 },
+        { k: 'fatherAge', th: 'อายุ (ปี)', en: 'Age (Yrs.)' },
+        { k: 'fatherOcc', th: 'อาชีพ', en: 'Occupation' },
+        { k: 'motherName', th: 'มารดา ชื่อ-สกุล', en: "Mother's name-surname", req: 1 },
+        { k: 'motherAge', th: 'อายุ (ปี)', en: 'Age (Yrs.)' },
+        { k: 'motherOcc', th: 'อาชีพ', en: 'Occupation' }
+      ] },
+      { step: 3, th: 'คู่สมรสและบุตร', en: 'Spouse and children', note: 1, fields: [
+        { k: 'spouseName', th: 'ชื่อภรรยา / สามี', en: 'Name of wife / Husband', opt: 1, when: () => d.marital === 'married' || d.marital === 'widowed' || d.marital === 'separated' },
+        { k: 'spouseWorkplace', th: 'สถานที่ทำงาน', en: 'Working place', opt: 1, when: () => !!d.spouseName },
+        { k: 'spousePosition', th: 'ตำแหน่ง', en: 'Position', opt: 1, when: () => !!d.spouseName },
+        { k: 'childrenMale', th: 'บุตรชาย (คน)', en: 'Children · Male', opt: 1 },
+        { k: 'childrenFemale', th: 'บุตรหญิง (คน)', en: 'Children · Female', opt: 1 }
+      ] },
+      { step: 3, th: 'พี่น้อง', en: 'Members in the family', fields: [
+        { k: 'membersMale', th: 'พี่น้องชาย (คน)', en: 'Male' },
+        { k: 'membersFemale', th: 'พี่น้องหญิง (คน)', en: 'Female' },
+        { k: 'childOrder', th: 'เป็นบุตรคนที่', en: "You're the child of the family no." }
+      ] },
+      { step: 3, rep: 'siblings', th: 'รายชื่อพี่น้อง', en: 'Brothers and sisters', opt: 1,
+        addTh: '+ เพิ่มพี่น้อง', addEn: '+ Add a sibling', itemTh: 'พี่น้องคนที่', itemEn: 'Sibling',
+        emptyTh: 'ยังไม่มีรายชื่อ เพิ่มได้เท่าที่ต้องการ', emptyEn: 'Nothing here yet. Add as many as you need.',
+        fields: [{ k: 'name', th: 'ชื่อ-สกุล', en: 'Name', req: 1 }, { k: 'age', th: 'อายุ (ปี)', en: 'Age' }, { k: 'occupation', th: 'อาชีพ', en: 'Occupation' }] },
+      /* STEP 4 */
+      { step: 4, rep: 'education', th: 'การศึกษา', en: 'Education', min: 1,
+        addTh: '+ เพิ่มการศึกษา', addEn: '+ Add education', itemTh: 'การศึกษาที่', itemEn: 'Education',
+        emptyTh: 'เพิ่มเฉพาะระดับที่คุณจบหรือกำลังศึกษา', emptyEn: 'Add only the levels you completed or are studying.',
+        fields: [
+          { k: 'level', th: 'ระดับการศึกษา', en: 'Educational level', type: 'chips', span: '1/-1', req: 1, opts: [['high', 'มัธยมศึกษาตอนปลาย', 'High school'], ['voc', 'ปวช.', 'Vocational'], ['dip', 'ปวส. / ปวท.', 'Diploma'], ['bach', 'ปริญญาตรี', 'Bachelor degree'], ['post', 'สูงกว่าปริญญาตรี', 'Post-Graduate'], ['other', 'อื่นๆ', 'Others']] },
+          { k: 'institution', th: 'สถาบันการศึกษา', en: 'Institution', type: 'combo', req: 1, span: '1/-1', list: this.institutions, ph: this.t('พิมพ์เพื่อค้นหาสถาบัน', 'Type to search for your institution') },
+          { k: 'major', th: 'สาขาวิชา', en: 'Major', type: 'combo', req: 1, span: '1/-1', list: this.majors, ph: this.t('พิมพ์เพื่อค้นหาสาขาวิชา', 'Type to search for your major') },
+          { k: 'from', th: 'ตั้งแต่ปี', en: 'From', req: 1, ph: '2559' },
+          { k: 'to', th: 'ถึงปี', en: 'To', req: 1, ph: '2564' }
+        ] },
+      { step: 4, rep: 'work', th: 'ประวัติการทำงาน', en: 'Working experience in chronological order', opt: 1,
+        addTh: '+ เพิ่มประสบการณ์ทำงาน', addEn: '+ Add work experience', itemTh: 'ที่ทำงานที่', itemEn: 'Experience',
+        emptyTh: 'ถ้าเป็นนักศึกษาจบใหม่ ข้ามส่วนนี้ได้เลย', emptyEn: "If you're a new graduate, you can skip this.",
+        fields: [
+          { k: 'company', th: 'สถานที่ทำงาน', en: 'Company', req: 1 },
+          { k: 'position', th: 'ตำแหน่งงาน', en: 'Position', req: 1 },
+          { k: 'from', th: 'เริ่ม (ปี)', en: 'From', req: 1 },
+          { k: 'to', th: 'ถึง (ปี)', en: 'To', req: 1, ph: this.t('ปัจจุบัน', 'Present') },
+          { k: 'salary', th: 'ค่าจ้าง', en: 'Salary' },
+          { k: 'jobDesc', th: 'ลักษณะงาน', en: 'Job description', type: 'area', span: '1/-1' },
+          { k: 'reason', th: 'เหตุที่ออก', en: 'Reasons of resignation', type: 'area', span: '1/-1' }
+        ] },
+      /* STEP 5 */
+      { step: 5, rep: 'languages', th: 'ความสามารถทางภาษา', en: 'Language ability', min: 1,
+        addTh: '+ เพิ่มภาษา', addEn: '+ Add a language', itemTh: 'ภาษาที่', itemEn: 'Language',
+        emptyTh: 'เช่น ไทย, อังกฤษ, ญี่ปุ่น', emptyEn: 'e.g. Thai, English, Japanese',
+        fields: [
+          { k: 'language', th: 'ภาษา', en: 'Language', req: 1, span: '1/-1', ph: this.t('ไทย', 'Thai') },
+          { k: 'speaking', th: 'พูด', en: 'Speaking', type: 'chips', span: '1/-1', req: 1, opts: lvl },
+          { k: 'writing', th: 'เขียน', en: 'Writing', type: 'chips', span: '1/-1', req: 1, opts: lvl },
+          { k: 'reading', th: 'อ่าน', en: 'Reading', type: 'chips', span: '1/-1', req: 1, opts: lvl }
+        ] },
+      { step: 5, th: 'ความสามารถพิเศษ', en: 'Special ability', fields: [
+        { k: 'typing', th: 'พิมพ์ดีด', en: 'Typing', type: 'chips', span: '1/-1', opts: yn },
+        { k: 'typingThai', th: 'ไทย (คำ/นาที)', en: 'Thai words/minute', when: () => d.typing === 'yes' },
+        { k: 'typingEng', th: 'อังกฤษ (คำ/นาที)', en: 'English words/minute', when: () => d.typing === 'yes' },
+        { k: 'computer', th: 'คอมพิวเตอร์', en: 'Computer', type: 'chips', span: '1/-1', opts: yn },
+        { k: 'computerDetail', th: 'ระบุโปรแกรม / ภาษา', en: 'Please mention', span: '1/-1', when: () => d.computer === 'yes' },
+        { k: 'driving', th: 'ขับรถยนต์', en: 'Driving', type: 'chips', span: '1/-1', opts: yn },
+        { k: 'drivingLicense', th: 'ใบขับขี่เลขที่', en: 'Driving license no.', when: () => d.driving === 'yes' },
+        { k: 'officeMachine', th: 'เครื่องใช้สำนักงานที่ใช้ได้', en: 'Office machine', opt: 1 },
+        { k: 'hobbies', th: 'งานอดิเรก', en: 'Hobbies', opt: 1 },
+        { k: 'sport', th: 'กีฬาที่ชอบ', en: 'Favourite sport', opt: 1 },
+        { k: 'specialKnowledge', th: 'ความรู้พิเศษ', en: 'Special knowledge', opt: 1 },
+        { k: 'otherAbility', th: 'อื่นๆ', en: 'Others', opt: 1 }
+      ] },
+      { step: 5, th: 'ความพร้อมในการทำงาน', en: 'Availability', fields: [
+        { k: 'overtime', th: 'ทำงานล่วงเวลาได้หรือไม่', en: 'I can work overtime', type: 'chips', span: '1/-1', req: 1, opts: yn },
+        { k: 'upCountry', th: 'ไปปฏิบัติงานต่างจังหวัดได้หรือไม่', en: 'I can work up country', type: 'chips', span: '1/-1', req: 1, opts: yn },
+        { k: 'availabilityOther', th: 'อื่นๆ ระบุ', en: 'Others (please mention)', opt: 1, span: '1/-1' }
+      ] },
+      { step: 5, th: 'ข้อมูลเพิ่มเติม', en: 'Additional information', fields: [
+        { k: 'jobSource', th: 'ทราบข่าวการรับสมัครจาก', en: 'Sources of job information', req: 1, span: '1/-1', ph: 'JOB BKK' },
+        { k: 'disease', th: 'เคยป่วยหนักหรือเป็นโรคติดต่อร้ายแรงหรือไม่', en: 'Have you ever been seriously ill or contracted a contagious disease?', type: 'chips', span: '1/-1', req: 1, opts: ever },
+        { k: 'diseaseDetail', th: 'ระบุชื่อโรคและรายละเอียด', en: 'If yes, explain fully', type: 'area', span: '1/-1', when: () => d.disease === 'yes' },
+        { k: 'appliedBefore', th: 'เคยสมัครงานกับบริษัทนี้มาก่อนหรือไม่', en: 'Have you ever applied for employment with us before?', type: 'chips', span: '1/-1', req: 1, opts: ever },
+        { k: 'appliedWhen', th: 'เมื่อไร', en: 'If yes, when?', when: () => d.appliedBefore === 'yes', span: '1/-1' },
+        { k: 'relatives', th: 'ชื่อญาติ / เพื่อน ที่ทำงานอยู่ในบริษัทนี้', en: 'Relatives / friends working with us known to you', opt: 1, span: '1/-1' }
+      ] },
+      { step: 5, rep: 'refs', th: 'บุคคลอ้างอิง', en: 'References', min: 2,
+        addTh: '+ เพิ่มบุคคลอ้างอิง', addEn: '+ Add a reference', itemTh: 'บุคคลอ้างอิงที่', itemEn: 'Reference',
+        emptyTh: 'ต้องมี 2 คน ที่ไม่ใช่ญาติหรือนายจ้างเดิม', emptyEn: 'Two people needed, other than relatives or former employers.',
+        fields: [
+          { k: 'name', th: 'ชื่อ-สกุล', en: 'Name', req: 1 },
+          { k: 'occupation', th: 'อาชีพ', en: 'Occupation', req: 1 },
+          { k: 'tel', th: 'โทรศัพท์', en: 'Telephone', req: 1 },
+          { k: 'address', th: 'ที่อยู่', en: 'Address', type: 'area', span: '1/-1' }
+        ] },
+      { step: 5, th: 'อื่นๆ ที่อยากให้เราทราบ', en: 'Anything else', fields: [
+        { k: 'furtherInfo', th: 'ข้อมูลเพิ่มเติมเกี่ยวกับตัวคุณ', en: 'Please provide any further information about yourself which will allow our company to know you better', type: 'area', span: '1/-1', opt: 1 }
+      ] }
+    ];
+  }
+
+  positionLabel() {
+    const v = this.state.d.position1;
+    if (v === 'other') return this.state.d.position1Other || '-';
+    const o = this.positions.find(x => x[0] === v);
+    return o ? this.t(o[1], o[2]) : '-';
+  }
+
+  ageHint() {
+    const dob = this.state.d.dob;
+    if (!dob) return '';
+    const b = new Date(dob); if (isNaN(b)) return '';
+    const n = new Date(); let a = n.getFullYear() - b.getFullYear();
+    const m = n.getMonth() - b.getMonth();
+    if (m < 0 || (m === 0 && n.getDate() < b.getDate())) a--;
+    if (a < 0 || a > 120) return '';
+    return this.state.lang === 'th' ? ('อายุ ' + a + ' ปี') : (a + ' yrs old');
+  }
+
+  stepMeta() {
+    return [
+      { th: 'ตัวคุณ', en: 'About you' },
+      { th: 'ที่อยู่ / ติดต่อ', en: 'Contact' },
+      { th: 'ครอบครัว', en: 'Family' },
+      { th: 'การศึกษา / งาน', en: 'Education' },
+      { th: 'ความสามารถ', en: 'Skills' },
+      { th: 'ตรวจสอบ', en: 'Review' }
+    ];
+  }
+
+  lede(step) {
+    const L = [
+      ['ตำแหน่งที่สนใจ และข้อมูลส่วนตัวพื้นฐาน ช่องที่ระบุว่าไม่บังคับสามารถข้ามได้', 'The role you want, plus the basics about you. Anything marked optional can be skipped.'],
+      ['ที่อยู่ปัจจุบัน ช่องทางติดต่อ และผู้ที่ติดต่อได้กรณีฉุกเฉิน', 'Where you live, how to reach you, and who to call in an emergency.'],
+      ['ข้อมูลครอบครัว เพิ่มรายชื่อพี่น้องได้เท่าที่มี', 'Your family. Add as many siblings as you have — no blank rows.'],
+      ['เพิ่มเฉพาะการศึกษาและงานที่คุณมีจริง ไม่ต้องกรอกตารางว่าง', 'Add only the records you actually have. No empty tables to fill.'],
+      ['ภาษา ความสามารถพิเศษ ความพร้อมทำงาน และบุคคลอ้างอิง', 'Languages, special abilities, availability, and references.'],
+      ['ตรวจสอบข้อมูลทั้งหมดอีกครั้ง แก้ไขได้ทุกส่วน ก่อนกดส่งใบสมัคร', 'Check everything over. You can jump back to any section before you submit.']
+    ];
+    return this.state.lang === 'th' ? L[step - 1][0] : L[step - 1][1];
+  }
+
+  chip(sel) {
+    return sel
+      ? { bg: '#3b5bdb', border: '#3b5bdb', color: '#fff' }
+      : { bg: '#fff', border: '#d7dbe3', color: '#3a3f4b' };
+  }
+
+  fieldVM(f, value, onChange, err, uid) {
+    const type = f.type || 'text';
+    const hint = f.hintTh !== undefined ? this.t(f.hintTh, f.hintEn) : '';
+    let sub = hint || '';
+    if (f.opt) sub = (sub ? sub + ' · ' : '') + (this.state.lang === 'th' ? 'ไม่บังคับ' : 'Optional');
+    const vm = {
+      label: this.t(f.th, f.en), sub: sub, span: f.span || 'auto',
+      isInput: type === 'text' || type === 'date', isArea: type === 'area', isChips: type === 'chips', isSelect: type === 'select',
+      isCheck: type === 'check', hideLabel: type === 'check',
+      labelDisplay: type === 'check' ? 'none' : 'block',
+      checkMark: value ? '✓' : '', checkBg: value ? '#3b5bdb' : '#fff', checkBorder: value ? '#3b5bdb' : '#c3c8d4',
+      toggle: () => onChange({ target: { value: value ? '' : 'yes' } }),
+      selColor: value ? '#1a1d26' : '#9aa0ae',
+      inputType: type === 'date' ? 'date' : 'text', ph: f.ph || '',
+      value: value || '', onChange: onChange, error: err || null,
+      borderColor: err ? '#e08a62' : '#d7dbe3', readOnly: !!f.ro, inputBg: f.ro ? '#f3f5fa' : '#fff'
+    };
+    if (type === 'combo') {
+      const id = uid || f.k;
+      const q = (value || '').trim().toLowerCase();
+      const matches = f.list.filter(x => !q || x.toLowerCase().indexOf(q) !== -1).slice(0, 8);
+      vm.isCombo = true; vm.isInput = false;
+      vm.comboOpen = this.state.openCombo === id && matches.length > 0;
+      vm.focus = () => this.setState({ openCombo: id });
+      vm.blur = () => { clearTimeout(this._cb); this._cb = setTimeout(() => { if (this.state.openCombo === id) this.setState({ openCombo: null }); }, 160); };
+      vm.comboItems = matches.map(x => ({ label: x, pick: () => { onChange({ target: { value: x } }); this.setState({ openCombo: null }); } }));
+      vm.comboNote = this.t('พิมพ์เองได้ถ้าไม่มีในรายการ', 'Not listed? Just type it in');
+    }
+    if (vm.isSelect) {
+      vm.selOpts = [{ value: '', label: this.t('— เลือก —', '— Select —') }].concat(f.opts.map(o => ({ value: o[0], label: this.t(o[1], o[2]) })));
+    }
+    if (vm.isChips) {
+      vm.opts = f.opts.map(o => {
+        const c = this.chip(value === o[0]);
+        return { label: this.t(o[1], o[2]), bg: c.bg, border: c.border, color: c.color, pick: () => onChange({ target: { value: value === o[0] ? '' : o[0] } }) };
+      });
+    }
+    return vm;
+  }
+
+  reqMsg(f) {
+    if (f.k === 'email') return this.t('กรุณากรอกอีเมลที่ติดต่อได้', 'Please enter an email we can reach you at');
+    return this.t('กรุณากรอกข้อมูลนี้', 'Please fill this in');
+  }
+
+  fieldError(f, value) {
+    const v = (value || '').trim();
+    if (f.req && !v) return this.reqMsg(f);
+    if (!v) return null;
+    if (f.k === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return this.t('อีเมลนี้ดูไม่ถูกต้อง', 'That email address looks incomplete');
+    if ((f.k === 'tel' || f.k === 'emgTel' || f.k === 'refTel') && v.replace(/\D/g, '').length < 9) return this.t('กรุณากรอกเบอร์โทรศัพท์ให้ครบ', 'Please enter a valid phone number');
+    if (f.k === 'postcode' && !/^\d{5}$/.test(v)) return this.t('รหัสไปรษณีย์มี 5 หลัก', 'A post code is 5 digits');
+    if (f.k === 'idCard' && v.replace(/\D/g, '').length !== 13) return this.t('เลขบัตรประชาชนมี 13 หลัก', 'An ID card number has 13 digits');
+    return null;
+  }
+
+  errorsFor(step) {
+    const out = { fields: {}, reps: {}, count: 0 };
+    this.catalog().filter(b => b.step === step).forEach(b => {
+      if (b.rep) {
+        const arr = this.state.rep[b.rep] || [];
+        if (b.min && arr.length < b.min) {
+          out.reps[b.rep] = { block: b.min === 1 ? this.t('กรุณาเพิ่มอย่างน้อย 1 รายการ', 'Please add at least one entry') : this.t('กรุณาเพิ่มอย่างน้อย ' + b.min + ' รายการ', 'Please add at least ' + b.min + ' entries'), items: {} };
+          out.count++;
+        }
+        arr.forEach((it, i) => {
+          b.fields.forEach(f => {
+            const e = this.fieldError(f, it[f.k]);
+            if (e) {
+              out.reps[b.rep] = out.reps[b.rep] || { block: null, items: {} };
+              out.reps[b.rep].items[i + ':' + f.k] = e; out.count++;
+            }
+          });
+        });
+      } else {
+        b.fields.forEach(f => {
+          if (f.when && !f.when()) return;
+          const e = this.fieldError(f, this.state.d[f.k]);
+          if (e) { out.fields[f.k] = e; out.count++; }
+        });
+      }
+    });
+    return out;
+  }
+
+  go(step) { this.setState({ step: step, showErr: false }, () => { window.scrollTo(0, 0); this.persist(); }); }
+
+  next = () => {
+    const s = this.state.step;
+    if (s === 6) {
+      if (!this.state.certified) { this.setState({ showErr: true }); return; }
+      this.setState({ submitted: true });
+      return;
+    }
+    const e = this.errorsFor(s);
+    if (e.count) { this.setState({ showErr: true }); return; }
+    this.go(s + 1);
+  };
+  back = () => { if (this.state.step > 1) this.go(this.state.step - 1); };
+
+  summary() {
+    const rows = [];
+    const val = (f, v) => {
+      if (!v) return '—';
+      if (f.type === 'check') return f.k === 'emgSameAddr' ? this.presentAddrText() : this.t('ใช่', 'Yes');
+      if (f.type === 'chips' || f.type === 'select') { const o = f.opts.find(x => x[0] === v); return o ? this.t(o[1], o[2]) : v; }
+      return v;
+    };
+    const groups = [];
+    for (let st = 1; st <= 5; st++) {
+      const blocks = this.catalog().filter(b => b.step === st);
+      const r = [];
+      blocks.forEach(b => {
+        if (b.rep) {
+          (this.state.rep[b.rep] || []).forEach((it, i) => {
+            const parts = b.fields.map(f => val(f, it[f.k])).filter(x => x !== '—');
+            r.push({ label: this.t(b.th, b.en) + ' ' + (i + 1), value: parts.join(' · ') || '—' });
+          });
+          if (!(this.state.rep[b.rep] || []).length) r.push({ label: this.t(b.th, b.en), value: '—' });
+        } else {
+          b.fields.forEach(f => {
+            if (f.when && !f.when()) return;
+            r.push({ label: this.t(f.th, f.en), value: val(f, this.state.d[f.k]) });
+          });
+        }
+      });
+      groups.push({
+        title: (st < 10 ? '0' + st : st) + ' · ' + this.t(this.stepMeta()[st - 1].th, this.stepMeta()[st - 1].en),
+        editLabel: this.t('แก้ไข', 'Edit'), edit: () => this.go(st), rows: r
+      });
+    }
+    return groups;
+  }
+
+  renderVals() {
+    const s = this.state;
+    const step = s.step;
+    const errs = s.showErr ? this.errorsFor(step) : { fields: {}, reps: {} };
+    const meta = this.stepMeta();
+
+    const blocks = this.catalog().filter(b => b.step === step).map(b => {
+      if (b.rep) {
+        const arr = s.rep[b.rep] || [];
+        const re = errs.reps[b.rep] || { block: null, items: {} };
+        return {
+          title: this.t(b.th, b.en), sub: '', isFields: false, isRepeat: true,
+          addLabel: this.t(b.addTh, b.addEn), add: () => this.addRep(b.rep),
+          isEmpty: arr.length === 0, emptyHint: this.t(b.emptyTh, b.emptyEn), error: re.block,
+          items: arr.map((it, i) => ({
+            title: this.t(b.itemTh, b.itemEn) + ' ' + (i + 1),
+            removeLabel: this.t('ลบ', 'Remove'), remove: () => this.delRep(b.rep, i),
+            fields: b.fields.map(f => this.fieldVM(f, it[f.k], e => this.setRep(b.rep, i, f.k, e.target.value), re.items[i + ':' + f.k], b.rep + ':' + i + ':' + f.k))
+          }))
+        };
+      }
+      const fields = b.fields.filter(f => !f.when || f.when())
+        .map(f => this.fieldVM(f, s.d[f.k], e => this.setField(f.k, e.target.value), errs.fields[f.k]));
+      return { title: this.t(b.th, b.en), sub: '', isFields: true, isRepeat: false, fields: fields };
+    });
+
+    const errCount = s.showErr ? this.errorsFor(step).count : 0;
+
+    return {
+      brandLine: this.t('ใบสมัครงาน', 'Careers · Job application'),
+      saveLabel: s.saveLabel,
+      setTh: () => this.setState({ lang: 'th' }, () => this.persist()),
+      setEn: () => this.setState({ lang: 'en' }, () => this.persist()),
+      thBg: s.lang === 'th' ? '#fff' : 'transparent', thColor: s.lang === 'th' ? '#3b5bdb' : '#6b7180',
+      enBg: s.lang === 'en' ? '#fff' : 'transparent', enColor: s.lang === 'en' ? '#3b5bdb' : '#6b7180',
+
+      submitted: s.submitted, editing: !s.submitted,
+      doneTitle: this.t('ส่งใบสมัครแล้ว', 'Application sent'),
+      doneBody: this.t('ขอบคุณ ' + (s.d.firstName || '') + ' เราได้รับใบสมัครตำแหน่ง ' + this.positionLabel() + ' แล้ว อีเมลยืนยันถูกส่งไปที่ ' + (s.d.email || '-') + ' ทีมงานจะติดต่อกลับเร็วๆ นี้',
+        'Thanks ' + (s.d.firstName || '') + '. We received your application for ' + this.positionLabel() + '. A confirmation went to ' + (s.d.email || '-') + ' and we will be in touch soon.'),
+      doneAgain: this.t('เริ่มใบสมัครใหม่', 'Start a new application'),
+      restart: () => { try { localStorage.removeItem('applicantForm.v2'); } catch (e) { } this.setState({ submitted: false, certified: false, step: 1, showErr: false, d: {}, rep: { siblings: [], education: [], work: [], languages: [], refs: [] } }); },
+
+      stepCounter: this.t('ขั้นที่ ' + step + ' จาก 6', 'Step ' + step + ' of 6'),
+      steps: meta.map((m, i) => {
+        const n = i + 1;
+        return {
+          num: (n < 10 ? '0' + n : n), name: this.t(m.th, m.en),
+          bar: n < step ? '#8fa3ea' : n === step ? '#3b5bdb' : '#e0e3ec',
+          color: n === step ? '#3b5bdb' : n < step ? '#6b7180' : '#a7adba',
+          go: () => this.go(n)
+        };
+      }),
+      stepTitle: (step === 6 ? this.t('ตรวจสอบและส่งใบสมัคร', 'Review and submit') : this.t(meta[step - 1].th, meta[step - 1].en)),
+      stepLede: this.lede(step),
+      blocks: step === 6 ? [] : blocks,
+
+      isReview: step === 6, summary: step === 6 ? this.summary() : [],
+      certTitle: this.t('การรับรองข้อมูล', 'Certification'),
+      certBody: this.t('ข้าพเจ้าขอรับรองว่าข้อความทั้งหมดในใบสมัครนี้เป็นความจริง หากตรวจพบภายหลังว่าเป็นความเท็จ บริษัทมีสิทธิเลิกจ้างได้โดยไม่ต้องจ่ายค่าชดเชยหรือค่าบอกกล่าวล่วงหน้าใดๆ',
+        'I certify all statements given in this application form are true. If any is found to be untrue after engagement, the company has the right to terminate my employment without any compensation or severance pay whatsoever.'),
+      certAgree: this.t('ข้าพเจ้าอ่านและยอมรับข้อความข้างต้น', 'I have read and accept the statement above'),
+      certMark: s.certified ? '✓' : '',
+      certBg: s.certified ? '#3b5bdb' : '#fff', certBorder: s.certified ? '#3b5bdb' : '#c3c8d4',
+      toggleCert: () => this.setState(p => ({ certified: !p.certified })),
+      certError: (s.showErr && step === 6 && !s.certified) ? this.t('กรุณายอมรับข้อความรับรองก่อนส่ง', 'Please accept the statement before submitting') : null,
+
+      back: this.back, next: this.next,
+      backLabel: this.t('← ย้อนกลับ', '← Back'),
+      backVis: step > 1 ? 'visible' : 'hidden', backColor: '#1a1d26', backCursor: 'pointer',
+      nextLabel: step === 6 ? this.t('ส่งใบสมัคร', 'Submit application') : this.t('ถัดไป →', 'Continue →'),
+      hintDisplay: errCount ? 'inline' : 'none',
+      footHint: errCount ? this.t('ยังมี ' + errCount + ' ช่องที่ต้องแก้', errCount + (errCount === 1 ? ' field needs attention' : ' fields need attention')) : ''
+    };
+  }
+}
+</script>
+</body>
+</html>

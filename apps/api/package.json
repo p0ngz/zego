@@ -1,0 +1,46 @@
+{
+  "name": "@zego/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "dotenv -e ../../.env -- tsx watch src/index.ts",
+    "start": "dotenv -e ../../.env -- tsx src/index.ts",
+    "build": "tsc --noEmit && esbuild src/index.ts --bundle --platform=node --format=esm --target=node20 --packages=external --outfile=dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "test": "dotenv -e ../../.env -- vitest run",
+    "db:migrate": "dotenv -e ../../.env -- prisma migrate dev",
+    "db:deploy": "dotenv -e ../../.env -- prisma migrate deploy",
+    "db:generate": "prisma generate",
+    "db:seed": "dotenv -e ../../.env -- tsx prisma/seed.ts",
+    "db:geo": "curl -fsSL -o data/geography.json https://raw.githubusercontent.com/thailand-geography-data/thailand-geography-json/main/src/geography.json",
+    "db:reset": "dotenv -e ../../.env -- prisma migrate reset --force",
+    "db:studio": "dotenv -e ../../.env -- prisma studio"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.2.1",
+    "@zego/shared": "*",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.10.5",
+    "@types/supertest": "^6.0.2",
+    "dotenv-cli": "^8.0.0",
+    "esbuild": "^0.24.2",
+    "prisma": "^6.2.1",
+    "supertest": "^7.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  }
+}
