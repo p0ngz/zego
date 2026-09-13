@@ -94,6 +94,10 @@ export function errorsForStep(
           // The spec as it applies to this row — which institutions to
           // suggest depends on the level answered beside it.
           const field = resolveField(spec, row);
+          // A reference's address stays hidden until a post code is typed;
+          // nothing hidden is asked for, so nothing hidden is checked.
+          if (field.hidden) continue;
+
           const error = fieldError(field, row[field.k], ctx.lang);
           if (!error) continue;
           const bucket = (out.reps[block.rep] ??= { block: null, items: {} });

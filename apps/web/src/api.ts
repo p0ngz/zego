@@ -70,14 +70,37 @@ export async function fetchLists(lang: Lang): Promise<ReferenceLists> {
   };
 }
 
-/** Resolves to null for a code that is not a Thai post code. */
+/**
+ * One post code, or null when it is not a Thai one.
+ *
+ * These replies are cached for a day, so a browser can be holding one
+ * from before a field existed — `singleProvince` and the province on
+ * each district were added after the first release. Filling them in here
+ * keeps a stale reply behaving like the single-province codes it was
+ * written for, instead of silently reading as "this code has two".
+ */
 export async function fetchPostcode(code: string): Promise<PostcodeEntry | null> {
+  let raw: Partial<PostcodeEntry>;
   try {
-    return await request<PostcodeEntry>(`/reference/postcodes/${code}`);
+    raw = await request<Partial<PostcodeEntry>>(`/reference/postcodes/${code}`);
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) return null;
     throw error;
   }
+
+  const provinceTh = raw.provinceTh ?? '';
+  const provinceEn = raw.provinceEn ?? '';
+
+  return {
+    provinceTh,
+    provinceEn,
+    singleProvince: raw.singleProvince ?? provinceTh !== '',
+    districts: (raw.districts ?? []).map((district) => ({
+      ...district,
+      provinceTh: district.provinceTh ?? provinceTh,
+      provinceEn: district.provinceEn ?? provinceEn,
+    })),
+  };
 }
 
 export function submitApplication(payload: SubmissionPayload): Promise<SubmissionReceipt> {

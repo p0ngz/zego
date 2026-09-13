@@ -22,6 +22,7 @@ import type {
   Option,
   PostcodeEntry,
   ReferenceData,
+  RepeatRow,
 } from './types.js';
 
 export interface CatalogContext {
@@ -29,7 +30,14 @@ export interface CatalogContext {
   values: FormValues;
   /** Post codes already looked up, plus the institution and major lists. */
   reference: ReferenceData;
-  /** How each address's post code lookup went, keyed by field prefix. */
+  /**
+   * How each post code lookup went, keyed by the code itself.
+   *
+   * Keying on the code rather than on which box it was typed into means
+   * every address — the applicant's, the emergency contact's, a
+   * reference's — reads the same answer for the same code, and a second
+   * address reusing one costs nothing.
+   */
   lookups?: Record<string, LookupStatus>;
 }
 
@@ -108,10 +116,10 @@ export function presentAddressText(ctx: CatalogContext): string {
  */
 function postcodeHint(
   ctx: CatalogContext,
-  prefix: string,
-  filled: boolean,
+  code: string,
+  entry: PostcodeEntry | null,
 ): { th: string; en: string } {
-  switch (ctx.lookups?.[prefix]) {
+  switch (ctx.lookups?.[code]) {
     case 'loading':
       return { th: 'กำลังค้นหา…', en: 'Looking it up…' };
     case 'notfound':
@@ -125,14 +133,14 @@ function postcodeHint(
         en: 'Could not look it up — fill in the province and district yourself',
       };
     default:
-      if (!filled) {
+      if (!entry) {
         return {
           th: 'กรอกก่อน เพื่อเลือกเขต/แขวงได้',
           en: 'Enter this first to pick your district',
         };
       }
       // Eight codes span two provinces; the district is what decides.
-      if (!postcodeEntry(ctx, prefix)?.singleProvince) {
+      if (!entry.singleProvince) {
         return {
           th: 'รหัสนี้มี 2 จังหวัด เลือกอำเภอก่อน',
           en: 'This code covers two provinces — pick your district first',
@@ -153,7 +161,8 @@ function addressFields(ctx: CatalogContext, prefix: string, when?: () => boolean
   const districts = districtOptions(ctx, prefix);
   const subDistricts = subDistrictOptions(ctx, prefix);
   const gate = (f: FieldSpec): FieldSpec => (when ? { ...f, when } : f);
-  const hint = postcodeHint(ctx, prefix, filled);
+  const code = (ctx.values[K('postcode')] ?? '').trim();
+  const hint = postcodeHint(ctx, code, postcodeEntry(ctx, prefix));
 
   return [
     gate({
@@ -195,6 +204,96 @@ function addressFields(ctx: CatalogContext, prefix: string, when?: () => boolean
     gate({ k: K('addrNo'), th: 'บ้านเลขที่', en: 'Address no.', req: true }),
     gate({ k: K('moo'), th: 'หมู่ที่', en: 'Moo', opt: true }),
     gate({ k: K('road'), th: 'ถนน', en: 'Road', opt: true }),
+  ];
+}
+
+/**
+ * The same address layout, for a row of a repeat section.
+ *
+ * A reference's address is not required, so all of it stays out of the
+ * way until someone types a post code — one box on screen instead of
+ * seven. The rest appear the moment there is something in it, and fill
+ * themselves in the same way the applicant's address does.
+ *
+ * Everything reads from the row rather than from the form's own answers,
+ * which is what `fromRow` is for: the fields are built once and rendered
+ * against whichever row they land in.
+ */
+function rowAddressFields(ctx: CatalogContext): FieldSpec[] {
+  const t = (th: string, en: string) => (ctx.lang === 'th' ? th : en);
+
+  const codeOf = (row: RepeatRow) => (row.postcode ?? '').trim();
+  const entryOf = (row: RepeatRow) => ctx.reference.postcodes[codeOf(row)] ?? null;
+  /** Nothing below the post code is worth showing before there is one. */
+  const started = (row: RepeatRow) => codeOf(row) !== '';
+
+  return [
+    {
+      k: 'postcode',
+      th: 'รหัสไปรษณีย์',
+      en: 'Post code',
+      opt: true,
+      numeric: true,
+      maxLength: 5,
+      ph: '10520',
+      fromRow: (row) => {
+        const hint = postcodeHint(ctx, codeOf(row), entryOf(row));
+        return { hintTh: hint.th, hintEn: hint.en };
+      },
+    },
+    {
+      k: 'province',
+      th: 'จังหวัด',
+      en: 'Province',
+      fromRow: (row) => ({ hidden: !started(row), ro: !!entryOf(row) }),
+    },
+    {
+      k: 'district',
+      th: 'อำเภอ / เขต',
+      en: 'District (Amphur)',
+      fromRow: (row) => {
+        if (!started(row)) return { hidden: true };
+        const entry = entryOf(row);
+        if (!entry) return {};
+        return {
+          type: 'select',
+          opts: entry.districts.map((d) => [d.th, d.th, d.en] as const),
+        };
+      },
+    },
+    {
+      k: 'subDistrict',
+      th: 'ตำบล / แขวง',
+      en: 'Sub-district',
+      fromRow: (row) => {
+        if (!started(row)) return { hidden: true };
+        const district = entryOf(row)?.districts.find((d) => d.th === (row.district ?? ''));
+        if (!district) return {};
+        return {
+          type: 'select',
+          opts: district.subDistricts.map((s) => [s.th, s.th, s.en] as const),
+        };
+      },
+    },
+    {
+      k: 'addrNo',
+      th: 'บ้านเลขที่',
+      en: 'Address no.',
+      fromRow: (row) => ({ hidden: !started(row) }),
+    },
+    {
+      k: 'moo',
+      th: 'หมู่ที่',
+      en: 'Moo',
+      fromRow: (row) => ({ hidden: !started(row) }),
+    },
+    {
+      k: 'road',
+      th: 'ถนน',
+      en: 'Road',
+      ph: t('ชื่อถนน', 'Street name'),
+      fromRow: (row) => ({ hidden: !started(row) }),
+    },
   ];
 }
 
@@ -793,7 +892,7 @@ export function buildCatalog(ctx: CatalogContext): Block[] {
         { k: 'name', th: 'ชื่อ-สกุล', en: 'Name', req: true },
         { k: 'occupation', th: 'อาชีพ', en: 'Occupation', req: true },
         { k: 'tel', th: 'โทรศัพท์', en: 'Telephone', req: true },
-        { k: 'address', th: 'ที่อยู่', en: 'Address', type: 'area', span: '1/-1' },
+        ...rowAddressFields(ctx),
       ],
     },
     {

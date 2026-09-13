@@ -133,7 +133,7 @@ export function useApplicationForm(): ApplicationForm {
     majors: [],
   });
   const [postcodes, setPostcodes] = useState<Record<string, PostcodeEntry>>({});
-  /** Keyed by address prefix: '' for the applicant, 'emg' for the contact. */
+  /** Keyed by the post code itself, so every address shares one answer. */
   const [lookups, setLookups] = useState<Record<string, LookupStatus>>({});
 
   const [submitting, setSubmitting] = useState(false);
@@ -219,19 +219,18 @@ export function useApplicationForm(): ApplicationForm {
       const code = (restored.state.values[key] ?? '').trim();
       if (!/^\d{5}$/.test(code)) continue;
 
-      const prefix = key === 'postcode' ? '' : 'emg';
       void fetchPostcode(code)
         .then((entry) => {
           if (cancelled) return;
           if (!entry) {
-            setLookups((prev) => ({ ...prev, [prefix]: 'notfound' }));
+            setLookups((prev) => ({ ...prev, [code]: 'notfound' }));
             return;
           }
-          setLookups((prev) => ({ ...prev, [prefix]: 'found' }));
+          setLookups((prev) => ({ ...prev, [code]: 'found' }));
           setPostcodes((prev) => (prev[code] ? prev : { ...prev, [code]: entry }));
         })
         .catch(() => {
-          if (!cancelled) setLookups((prev) => ({ ...prev, [prefix]: 'error' }));
+          if (!cancelled) setLookups((prev) => ({ ...prev, [code]: 'error' }));
         });
     }
 
@@ -260,27 +259,39 @@ export function useApplicationForm(): ApplicationForm {
    * rather than a table in the bundle, so this lands a moment after the
    * fifth digit is typed.
    */
+  /**
+   * Fetches one post code into the cache and records how it went.
+   *
+   * Both are keyed by the code, so two addresses using the same one share
+   * a single request and a single answer.
+   */
+  const lookupPostcode = useCallback(async (code: string): Promise<PostcodeEntry | null> => {
+    setLookups((prev) => ({ ...prev, [code]: 'loading' }));
+
+    let entry: PostcodeEntry | null;
+    try {
+      entry = await fetchPostcode(code);
+    } catch {
+      // Offline, or the API is not answering. Say so: the province and
+      // district stay editable, but only the note explains why.
+      setLookups((prev) => ({ ...prev, [code]: 'error' }));
+      return null;
+    }
+
+    if (!entry) {
+      setLookups((prev) => ({ ...prev, [code]: 'notfound' }));
+      return null;
+    }
+
+    setLookups((prev) => ({ ...prev, [code]: 'found' }));
+    setPostcodes((prev) => (prev[code] ? prev : { ...prev, [code]: entry }));
+    return entry;
+  }, []);
+
   const applyPostcode = useCallback(
     async (prefix: string, code: string) => {
-      setLookups((prev) => ({ ...prev, [prefix]: 'loading' }));
-
-      let entry: PostcodeEntry | null;
-      try {
-        entry = await fetchPostcode(code);
-      } catch {
-        // Offline, or the API is not answering. Say so: the province and
-        // district stay editable, but only the note explains why.
-        setLookups((prev) => ({ ...prev, [prefix]: 'error' }));
-        return;
-      }
-
-      if (!entry) {
-        setLookups((prev) => ({ ...prev, [prefix]: 'notfound' }));
-        return;
-      }
-
-      setLookups((prev) => ({ ...prev, [prefix]: 'found' }));
-      setPostcodes((prev) => (prev[code] ? prev : { ...prev, [code]: entry }));
+      const entry = await lookupPostcode(code);
+      if (!entry) return;
 
       const key = (name: string) =>
         prefix ? prefix + name.charAt(0).toUpperCase() + name.slice(1) : name;
@@ -302,7 +313,33 @@ export function useApplicationForm(): ApplicationForm {
         return next;
       });
     },
-    [lang],
+    [lang, lookupPostcode],
+  );
+
+  /** The same fill, for an address that lives inside a repeat row. */
+  const applyRowPostcode = useCallback(
+    async (repeatKey: RepeatKey, index: number, code: string) => {
+      const entry = await lookupPostcode(code);
+      if (!entry) return;
+
+      setRepeats((prev) => {
+        const row = prev[repeatKey][index];
+        // The row may have been removed, or its code typed over, since.
+        if (!row || (row.postcode ?? '').trim() !== code) return prev;
+
+        const next = { ...row };
+        if (next.district && !entry.districts.some((d) => d.th === next.district)) {
+          next.district = '';
+          next.subDistrict = '';
+        }
+        next.province = provinceFor(entry, next.district ?? '', lang);
+
+        const rows = prev[repeatKey].slice();
+        rows[index] = next;
+        return { ...prev, [repeatKey]: rows };
+      });
+    },
+    [lang, lookupPostcode],
   );
 
   const setField = useCallback(
@@ -348,12 +385,7 @@ export function useApplicationForm(): ApplicationForm {
       if (/postcode$/i.test(key)) {
         const prefix = key === 'postcode' ? '' : key.slice(0, -'Postcode'.length);
         const code = value.trim();
-        if (/^\d{5}$/.test(code)) {
-          void applyPostcode(prefix, code);
-        } else {
-          // Half a code is not a failed lookup; drop whatever the last one said.
-          setLookups((prev) => (prev[prefix] ? { ...prev, [prefix]: 'idle' } : prev));
-        }
+        if (/^\d{5}$/.test(code)) void applyPostcode(prefix, code);
       }
     },
     [applyPostcode, postcodes, lang],
@@ -363,11 +395,27 @@ export function useApplicationForm(): ApplicationForm {
     (key: RepeatKey, index: number, field: string, value: string) => {
       setRepeats((prev) => {
         const rows = prev[key].slice();
-        rows[index] = { ...rows[index], [field]: value };
+        const row = { ...rows[index], [field]: value };
+
+        // An address inside a row follows the same rules as the form's
+        // own: editing the code drops what it filled in, and changing
+        // the district drops the sub-district under it.
+        if (field === 'postcode' && (rows[index]?.postcode ?? '') !== value) {
+          row.province = '';
+          row.district = '';
+          row.subDistrict = '';
+        }
+        if (field === 'district') row.subDistrict = '';
+
+        rows[index] = row;
         return { ...prev, [key]: rows };
       });
+
+      if (field === 'postcode' && /^\d{5}$/.test(value.trim())) {
+        void applyRowPostcode(key, index, value.trim());
+      }
     },
-    [],
+    [applyRowPostcode],
   );
 
   const addRepeatRow = useCallback((key: RepeatKey) => {

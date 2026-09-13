@@ -34,6 +34,8 @@ export interface FieldSpec {
   numeric?: boolean;
   /** Only asked when this holds — military status only if male, and so on. */
   when?: () => boolean;
+  /** Not drawn and not checked. `when` for fields inside a repeat row. */
+  hidden?: boolean;
   /**
    * Overrides worked out from the row this field sits in.
    *

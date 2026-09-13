@@ -79,6 +79,7 @@ function Repeat({ block, form }: RepeatProps): JSX.Element {
               // A field that follows a neighbour in the same row — the
               // institution on the level — resolves against that row here.
               const spec = resolveField(field, row);
+              if (spec.hidden) return null;
               return (
                 <Field
                   key={field.k}
