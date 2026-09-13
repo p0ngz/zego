@@ -1,10 +1,21 @@
 generator client {
   provider = "prisma-client-js"
+  /// "native" builds for whatever machine runs `prisma generate`; the
+  /// second is what Vercel's Node runtime needs. Without it the deployed
+  /// function cannot find a query engine it can execute.
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
   provider = "postgresql"
+  /// Pooled connection. On serverless every request can be a new instance,
+  /// and each one opening its own Postgres connection exhausts the server
+  /// long before traffic does — so the app talks to a pooler.
   url      = env("DATABASE_URL")
+  /// Migrations need a real session — advisory locks and DDL, which a
+  /// transaction pooler cannot carry. Against a plain local Postgres this
+  /// is simply the same URL again.
+  directUrl = env("DIRECT_DATABASE_URL")
 }
 
 /// Thailand's 77 provinces, seeded from the public geography dataset.

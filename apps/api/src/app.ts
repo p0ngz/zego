@@ -16,12 +16,26 @@ export function createApp(): Express {
 
   app.use(helmet());
 
+  /*
+   * Where the browser is allowed to call from.
+   *
+   * Deployed to Vercel the form and the API share a host, but a
+   * same-origin POST still sends an Origin header — so the deployment's
+   * own URL has to be on the list or submitting fails with a CORS error
+   * that looks like the API is down. Vercel puts those URLs in the
+   * environment; nothing has to be configured by hand.
+   */
+  const allowedOrigins = new Set(env.CORS_ORIGINS);
+  for (const host of [process.env.VERCEL_PROJECT_PRODUCTION_URL, process.env.VERCEL_URL]) {
+    if (host) allowedOrigins.add(`https://${host}`);
+  }
+
   app.use(
     cors({
       origin(origin, callback) {
-        // No Origin header: curl, a health probe, a same-origin request.
+        // No Origin header: curl, a health probe, a same-origin GET.
         if (!origin) return callback(null, true);
-        if (env.CORS_ORIGINS.includes(origin)) return callback(null, true);
+        if (allowedOrigins.has(origin)) return callback(null, true);
         callback(new Error(`Origin ${origin} is not allowed`));
       },
     }),

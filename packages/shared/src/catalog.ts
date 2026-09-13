@@ -12,7 +12,7 @@ import {
   SKILL_LEVELS,
   YES_NO,
 } from './options.js';
-import { institutionsFor } from './types.js';
+import { institutionsFor, levelHasMajorList } from './types.js';
 import type {
   Block,
   FieldSpec,
@@ -532,6 +532,27 @@ export function buildCatalog(ctx: CatalogContext): Block[] {
           span: '1/-1',
           list: ctx.reference.majors,
           ph: t('เลือกหรือพิมพ์สาขาวิชา', 'Pick or type your major'),
+          /*
+           * Below a degree, this is a plain box.
+           *
+           * The list is of degree subjects. Offering it to someone who
+           * finished at M.6 or took a vocational certificate means
+           * scrolling a hundred things none of which is what they
+           * studied, so they are better off just writing it.
+           */
+          fromRow: (row) => {
+            const level = (row.level ?? '').trim();
+            if (levelHasMajorList(level)) return {};
+
+            return {
+              type: 'text',
+              list: undefined,
+              ph:
+                level === 'high'
+                  ? t('เช่น วิทย์-คณิต, ศิลป์-ภาษา', 'e.g. Science–Maths')
+                  : t('เช่น ช่างยนต์, การบัญชี', 'e.g. Automotive, Accounting'),
+            };
+          },
         },
         { k: 'from', th: 'ตั้งแต่ปี', en: 'From', req: true, ph: '2559' },
         { k: 'to', th: 'ถึงปี', en: 'To', req: true, ph: '2564' },

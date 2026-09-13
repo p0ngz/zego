@@ -9,6 +9,8 @@ const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().min(1).max(65535).default(3003),
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required — see .env.example'),
+  /** Unpooled, for migrations. The same value as DATABASE_URL locally. */
+  DIRECT_DATABASE_URL: z.string().min(1, 'DIRECT_DATABASE_URL is required — see .env.example'),
 
   /** Browser origins allowed to call this API, comma separated. */
   CORS_ORIGINS: z

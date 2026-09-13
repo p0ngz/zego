@@ -179,6 +179,23 @@ export const INSTITUTION_KINDS_BY_LEVEL: Record<string, InstitutionKind[]> = {
   post: ['UNIVERSITY', 'RAJABHAT', 'RAJAMANGALA', 'PRIVATE'],
 };
 
+/**
+ * Levels the list of majors actually applies to.
+ *
+ * Those majors are degree subjects. A school leaver studied a track, a
+ * vocational student studied a trade, and neither is on that list — so
+ * for them the field is a box to type in rather than a list to fail to
+ * find themselves in.
+ */
+export const DEGREE_LEVELS = ['bach', 'post'] as const;
+
+export function levelHasMajorList(level: string): boolean {
+  const trimmed = level.trim();
+  // Nothing chosen yet, or the catch-all "others": no reason to narrow.
+  if (!trimmed || !(trimmed in INSTITUTION_KINDS_BY_LEVEL)) return true;
+  return (DEGREE_LEVELS as readonly string[]).includes(trimmed);
+}
+
 export interface ReferenceData {
   postcodes: Record<string, PostcodeEntry>;
   institutions: InstitutionEntry[];
