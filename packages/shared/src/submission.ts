@@ -19,6 +19,12 @@ export const submissionSchema = z.object({
   repeats,
   /** The certification on the last step — an application cannot arrive without it. */
   certified: z.literal(true),
+  /**
+   * Consent to processing personal data, which PDPA section 26 wants
+   * asked separately from the certification above. One says the answers
+   * are true; this one says they may be kept and read.
+   */
+  consented: z.literal(true),
 });
 
 export type SubmissionPayload = z.infer<typeof submissionSchema>;

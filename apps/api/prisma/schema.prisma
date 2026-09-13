@@ -86,6 +86,23 @@ model Major {
   @@index([nameTh])
 }
 
+/// Counts submissions per sender so a public form cannot be flooded.
+///
+/// Serverless gives every request its own instance, so a counter held in
+/// memory resets constantly and protects nothing. This one is shared
+/// because it is in the database. Rows older than the window are deleted
+/// on the way past, so it stays small.
+model SubmissionAttempt {
+  id Int @id @default(autoincrement())
+  /// SHA-256 of the sender's address and a server-side key — enough to
+  /// recognise a repeat, not enough to identify anyone from.
+  fingerprint String
+  at          DateTime @default(now())
+
+  @@index([fingerprint, at])
+  @@index([at])
+}
+
 enum ApplicationStatus {
   NEW
   REVIEWING

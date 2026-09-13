@@ -27,6 +27,8 @@ afterAll(async () => {
   await prisma.$disconnect();
 });
 
+const ADMIN = 'Bearer test-admin-token-long-enough-to-pass';
+
 async function post(body: object) {
   const response = await request(app).post('/api/applications').send(body);
   const reference = (response.body as { reference?: string }).reference;
@@ -138,7 +140,9 @@ describe('POST /api/applications', () => {
 
   it('masks the ID number when an application is read back', async () => {
     const created = await post(validSubmission());
-    const response = await request(app).get(`/api/applications/${created.body.reference}`);
+    const response = await request(app)
+      .get(`/api/applications/${created.body.reference}`)
+      .set('Authorization', ADMIN);
 
     expect(response.status).toBe(200);
     expect(response.body.values.idCard).toMatch(/0123$/);
@@ -149,6 +153,70 @@ describe('POST /api/applications', () => {
     const response = await post({ hello: 'world' });
     expect(response.status).toBe(400);
     expect(response.body.issues).toBeInstanceOf(Array);
+  });
+
+  it('refuses an application without consent to keep the data', async () => {
+    // PDPA wants this asked apart from the truthfulness certification,
+    // so the server has to insist on it apart from that too.
+    const payload = { ...validSubmission(), consented: false };
+    const response = await post(payload);
+    expect(response.status).toBe(400);
+  });
+
+  /*
+   * The counter lives in the database precisely so it survives across
+   * instances, which is also what lets this test fill it directly. The
+   * fingerprint is a salted hash of the sender's address, so rather than
+   * guessing it, one real submission is made and the row it wrote says
+   * what these requests are counted under.
+   */
+  it('refuses a sender who has already submitted too often', async () => {
+    await prisma.submissionAttempt.deleteMany({});
+
+    const first = await post(validSubmission());
+    expect(first.status).toBe(201);
+
+    const seen = await prisma.submissionAttempt.findFirstOrThrow();
+    await prisma.submissionAttempt.createMany({
+      data: Array.from({ length: 50 }, () => ({ fingerprint: seen.fingerprint })),
+    });
+
+    const refused = await post(validSubmission());
+    expect(refused.status).toBe(429);
+    expect(refused.body.error).toMatch(/too many/i);
+
+    await prisma.submissionAttempt.deleteMany({});
+  });
+});
+
+/*
+ * The list carries every applicant's name, phone number and address.
+ * It is the one part of this API that must never answer a stranger.
+ */
+describe('reading applications back', () => {
+  it('turns away a request with no token', async () => {
+    const response = await request(app).get('/api/applications');
+    expect(response.status).toBe(401);
+  });
+
+  it('turns away a wrong token', async () => {
+    const response = await request(app)
+      .get('/api/applications')
+      .set('Authorization', 'Bearer not-the-right-token-at-all-no');
+    expect(response.status).toBe(401);
+  });
+
+  it('answers a request carrying the right one', async () => {
+    const response = await request(app).get('/api/applications').set('Authorization', ADMIN);
+
+    expect(response.status).toBe(200);
+    expect(response.body.items).toBeInstanceOf(Array);
+  });
+
+  it('guards one application by reference too', async () => {
+    const created = await post(validSubmission());
+    const response = await request(app).get(`/api/applications/${created.body.reference}`);
+    expect(response.status).toBe(401);
   });
 });
 

@@ -141,9 +141,11 @@ function Editing({ form }: { form: ApplicationForm }): JSX.Element {
 
             <button
               type="button"
-              className="btn-next"
+              className={`btn-next${form.submitting ? ' is-sending' : ''}`}
               onClick={form.next}
-              disabled={form.submitting}
+              // Nothing to send until both boxes on the review step are
+              // ticked; the reason sits just above the button.
+              disabled={form.submitting || (isReview && !(form.certified && form.consented))}
             >
               {form.submitting
                 ? form.t('กำลังส่ง…', 'Sending…')

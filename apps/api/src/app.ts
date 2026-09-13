@@ -1,9 +1,9 @@
 import cors from 'cors';
 import express, { type Express } from 'express';
-import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
-import { env, isTest } from './env.js';
+import { env } from './env.js';
 import { errorHandler, notFound } from './errors.js';
+import { runPurge } from './guards.js';
 import { applicationsRouter } from './routes/applications.js';
 import { referenceRouter } from './routes/reference.js';
 
@@ -50,21 +50,9 @@ export function createApp(): Express {
 
   app.use('/api/reference', referenceRouter);
 
-  // The form is public, so submitting is the one thing worth throttling.
-  if (!isTest) {
-    app.use(
-      '/api/applications',
-      rateLimit({
-        windowMs: 60 * 60 * 1000,
-        limit: (req) => (req.method === 'POST' ? env.SUBMIT_RATE_LIMIT : 200),
-        standardHeaders: 'draft-7',
-        legacyHeaders: false,
-        message: {
-          error: 'Too many applications from this address. Try again in an hour.',
-        },
-      }),
-    );
-  }
+  // Called nightly by Vercel to delete applications past their
+  // retention period. Guarded by a secret only Vercel is given.
+  app.get('/api/cron/purge', runPurge);
 
   app.use('/api/applications', applicationsRouter);
 

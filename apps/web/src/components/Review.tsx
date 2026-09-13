@@ -110,7 +110,80 @@ export function Review({ form }: ReviewProps): JSX.Element {
       ))}
 
       <Certification form={form} />
+      <Consent form={form} />
+
+      {/*
+        Says why the submit button is not available.
+
+        The button is disabled until both boxes are ticked, and a disabled
+        button that does not explain itself is just a dead end. This sits
+        directly above it and is readable at every width, which the hint
+        in the action bar is not on a phone.
+      */}
+      {form.certified && form.consented ? null : (
+        <p className="submit-gate">
+          {form.t(
+            'ติ๊กยอมรับทั้งสองข้อด้านบน จึงจะส่งใบสมัครได้',
+            'Tick both boxes above to submit your application',
+          )}
+        </p>
+      )}
     </div>
+  );
+}
+
+/**
+ * Consent to the data being kept, asked on its own.
+ *
+ * The certification above says the answers are true. That is not consent
+ * to hold them — PDPA section 26 wants that asked separately and in
+ * plain terms, and this form collects four of the categories it calls
+ * sensitive.
+ */
+function Consent({ form }: ReviewProps): JSX.Element {
+  const error =
+    form.showErrors && !form.consented
+      ? form.t(
+          'กรุณายินยอมให้เก็บข้อมูลก่อนส่งใบสมัคร',
+          'Please agree to us keeping your details before submitting',
+        )
+      : null;
+
+  return (
+    <section className="card">
+      <h2 className="review-title">
+        {form.t('ความยินยอมให้เก็บข้อมูลส่วนบุคคล', 'Consent to keep your details')}
+      </h2>
+      <p className="cert-body">
+        {form.t(
+          'ใบสมัครนี้มีข้อมูลอ่อนไหวตาม พ.ร.บ.คุ้มครองข้อมูลส่วนบุคคล มาตรา 26 ได้แก่ เลขบัตรประชาชน ศาสนา เชื้อชาติ และประวัติการเจ็บป่วย บริษัทจะใช้ข้อมูลเหล่านี้เพื่อพิจารณารับเข้าทำงานเท่านั้น จะไม่เปิดเผยแก่บุคคลภายนอกโดยไม่ได้รับอนุญาต และจะลบใบสมัครโดยอัตโนมัติเมื่อพ้นระยะเวลาที่บริษัทกำหนด',
+          'This application includes data that Thailand’s PDPA section 26 treats as sensitive: your national ID number, religion, race and health history. They will be used only to consider you for this role, will not be passed to anyone outside the company without your permission, and the application is deleted automatically once the retention period is up.',
+        )}
+      </p>
+
+      <button
+        type="button"
+        className="check"
+        aria-pressed={form.consented}
+        onClick={form.toggleConsented}
+      >
+        <span className="check-box" aria-hidden="true" style={{ marginTop: 1 }}>
+          {form.consented ? '✓' : ''}
+        </span>
+        <span className="cert-agree">
+          {form.t(
+            'ข้าพเจ้ายินยอมให้บริษัทเก็บและใช้ข้อมูลข้างต้นตามวัตถุประสงค์ที่ระบุ',
+            'I agree to the company keeping and using the details above for that purpose',
+          )}
+        </span>
+      </button>
+
+      {error ? (
+        <span className="field-error" role="alert">
+          {error}
+        </span>
+      ) : null}
+    </section>
   );
 }
 

@@ -29,8 +29,21 @@ const schema = z.object({
    */
   APP_ENCRYPTION_KEY: z.string().optional(),
 
-  /** Applications accepted per IP per hour. */
+  /** Applications accepted per sender per hour. */
   SUBMIT_RATE_LIMIT: z.coerce.number().int().min(1).default(10),
+
+  /**
+   * Bearer token for reading applications back. Without one those
+   * endpoints are switched off rather than left open — the list carries
+   * every applicant's name, phone number and address.
+   */
+  ADMIN_TOKEN: z.string().min(24).optional(),
+
+  /** Days an application is kept before the nightly purge removes it. */
+  RETENTION_DAYS: z.coerce.number().int().min(1).default(365),
+
+  /** Vercel sends this to the scheduled purge; nothing else may call it. */
+  CRON_SECRET: z.string().min(16).optional(),
 });
 
 const parsed = schema.safeParse(process.env);

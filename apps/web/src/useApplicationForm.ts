@@ -100,6 +100,8 @@ export interface ApplicationForm {
 
   certified: boolean;
   toggleCertified: () => void;
+  consented: boolean;
+  toggleConsented: () => void;
 
   saveState: SaveState;
   submitting: boolean;
@@ -125,6 +127,7 @@ export function useApplicationForm(): ApplicationForm {
   const [repeats, setRepeats] = useState<RepeatValues>(restored.state.repeats);
 
   const [certified, setCertified] = useState(false);
+  const [consented, setConsented] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>(restored.resumed ? 'saved' : 'idle');
 
@@ -454,7 +457,13 @@ export function useApplicationForm(): ApplicationForm {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const result = await submitApplication({ lang, values, repeats, certified: true });
+      const result = await submitApplication({
+        lang,
+        values,
+        repeats,
+        certified: true,
+        consented: true,
+      });
       setReceipt(result);
       try {
         localStorage.removeItem(STORAGE_KEY);
@@ -491,7 +500,9 @@ export function useApplicationForm(): ApplicationForm {
 
   const next = useCallback(() => {
     if (step === REVIEW_STEP) {
-      if (!certified) {
+      // Both boxes: one says the answers are true, the other allows them
+      // to be kept. PDPA wants those asked separately.
+      if (!certified || !consented) {
         setShowErrors(true);
         return;
       }
@@ -524,11 +535,12 @@ export function useApplicationForm(): ApplicationForm {
       return;
     }
     goToStep(step + 1);
-  }, [step, certified, send, catalogContext, repeats, goToStep]);
+  }, [step, certified, consented, send, catalogContext, repeats, goToStep]);
 
   const setLang = useCallback((next: Lang) => setLangState(next), []);
 
   const toggleCertified = useCallback(() => setCertified((on) => !on), []);
+  const toggleConsented = useCallback(() => setConsented((on) => !on), []);
 
   const restart = useCallback(() => {
     try {
@@ -540,6 +552,7 @@ export function useApplicationForm(): ApplicationForm {
     setRepeats(emptyRepeats());
     setStep(1);
     setCertified(false);
+    setConsented(false);
     setShowErrors(false);
     setReceipt(null);
     setSubmitError(null);
@@ -565,6 +578,8 @@ export function useApplicationForm(): ApplicationForm {
     showErrors,
     certified,
     toggleCertified,
+    consented,
+    toggleConsented,
     saveState,
     submitting,
     submitError,

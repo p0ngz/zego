@@ -13,6 +13,7 @@ import { z } from 'zod';
 import { decryptSensitive, encryptSensitive, maskIdCard } from '../crypto.js';
 import { HttpError, wrap } from '../errors.js';
 import { prisma } from '../prisma.js';
+import { limitSubmissions, requireAdmin } from '../guards.js';
 import { addressMatchesPostcode } from '../reference.js';
 
 export const applicationsRouter: Router = Router();
@@ -36,6 +37,7 @@ function referenceCode(): string {
  */
 applicationsRouter.post(
   '/',
+  limitSubmissions,
   wrap(async (req, res) => {
     const payload = submissionSchema.parse(req.body);
 
@@ -104,6 +106,7 @@ const listQuery = z.object({
 /** Applications received, newest first. Answers stay out of the list. */
 applicationsRouter.get(
   '/',
+  requireAdmin,
   wrap(async (req, res) => {
     const { take, skip } = listQuery.parse(req.query);
 
@@ -140,6 +143,7 @@ applicationsRouter.get(
 /** One application by its reference code, with the ID number kept masked. */
 applicationsRouter.get(
   '/:reference',
+  requireAdmin,
   wrap(async (req, res) => {
     const reference = z.string().regex(/^ZG-[A-Z2-9]{6}$/).parse(req.params.reference);
 

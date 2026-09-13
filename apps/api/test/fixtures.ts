@@ -9,6 +9,7 @@ export function validSubmission(overrides: Partial<SubmissionPayload> = {}): Sub
   return {
     lang: 'th',
     certified: true,
+    consented: true,
     values: {
       // Step 1
       position1: 'fullstack',
